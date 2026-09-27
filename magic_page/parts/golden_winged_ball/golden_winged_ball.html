@@ -1,0 +1,40 @@
+{% load static %}
+{% comment %}
+  THE GOLDEN WINGED BALL: a small golden ball with fluttering wings that flies
+  around the screen once the healing spell has been cast. Drawn by us.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'golden_winged_ball/golden_winged_ball.css' %}" nonce="{{ csp_nonce }}">
+
+<div id="golden-winged-ball" hidden aria-hidden="true">
+  {# A few fading copies that follow behind it, like a shimmer in the air. #}
+  <div class="shimmer"></div><div class="shimmer"></div><div class="shimmer"></div><div class="shimmer"></div>
+
+  <svg class="ball" viewBox="0 0 120 60">
+    <defs>
+      <radialGradient id="gold-shine" cx="38%" cy="32%" r="70%">
+        <stop offset="0%" stop-color="#fff7cf"/>
+        <stop offset="35%" stop-color="#f1cf62"/>
+        <stop offset="75%" stop-color="#b8872a"/>
+        <stop offset="100%" stop-color="#6e4c12"/>
+      </radialGradient>
+      <linearGradient id="wing-colour" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#fffdf2" stop-opacity="0.95"/>
+        <stop offset="100%" stop-color="#e8c15a" stop-opacity="0.35"/>
+      </linearGradient>
+    </defs>
+    {# Wings: thin, feather-like shapes with a few veins. #}
+    <g class="wing left-wing">
+      <path d="M48 30 C 30 8, 8 6, 2 16 C 14 18, 24 24, 48 32 Z" fill="url(#wing-colour)"/>
+      <path d="M46 30 C 32 18, 18 14, 6 16 M46 31 C 34 24, 22 22, 12 22" class="wing-veins"/>
+    </g>
+    <g class="wing right-wing">
+      <path d="M72 30 C 90 8, 112 6, 118 16 C 106 18, 96 24, 72 32 Z" fill="url(#wing-colour)"/>
+      <path d="M74 30 C 88 18, 102 14, 114 16 M74 31 C 86 24, 98 22, 108 22" class="wing-veins"/>
+    </g>
+    {# The ball, with a thin engraved band around it. #}
+    <circle cx="60" cy="32" r="13" fill="url(#gold-shine)"/>
+    <path d="M47.5 32 C 52 36, 68 36, 72.5 32" class="engraving"/>
+  </svg>
+</div>
+
+<script type="module" src="{% static 'golden_winged_ball/golden_winged_ball.js' %}" nonce="{{ csp_nonce }}"></script>

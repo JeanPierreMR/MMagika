@@ -1,0 +1,8 @@
+{% load static %}
+{# THE SWIRLING PORTAL: opens where someone draws a spiral. #}
+<link rel="stylesheet" href="{% static 'swirling_portal/swirling_portal.css' %}" nonce="{{ csp_nonce }}">
+<div id="swirling-portal" class="swirling-portal" hidden aria-hidden="true">
+  <div class="swirl"></div>
+  <div class="swirl inner"></div>
+</div>
+<script type="module" src="{% static 'swirling_portal/swirling_portal.js' %}" nonce="{{ csp_nonce }}"></script>

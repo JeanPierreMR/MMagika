@@ -1,0 +1,132 @@
+#scroll-layer {
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4rem;
+}
+#heart-glitter { z-index: 70; }
+
+.scroll {
+  position: relative;
+  width: min(86vw, 560px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* The wooden rods at the top and bottom of the scroll. */
+.roller {
+  height: 22px;
+  margin: 0 -18px;
+  border-radius: 11px;
+  background: linear-gradient(#4a2c16, #b8864f 40%, #6b4222 75%, #2e1a0b);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+  position: relative;
+  z-index: 1;
+}
+
+/* The paper. While closed it has no height: only the two rods show, as if rolled up. */
+.paper {
+  overflow: hidden;
+  max-height: 0;
+  margin: -6px 0;
+  padding: 0 clamp(18px, 5vw, 44px);
+  background:
+    radial-gradient(ellipse at center, rgba(255, 244, 214, 0.35), rgba(0, 0, 0, 0) 70%),
+    linear-gradient(90deg, #8a6c43, #d9c49a 12%, #e6d4ad 50%, #d9c49a 88%, #8a6c43);
+  transition: max-height 1.8s cubic-bezier(0.3, 0.7, 0.2, 1), padding 1.8s ease;
+}
+.scroll.is-open .paper {
+  max-height: 60vh;
+  padding-top: 2.2rem;
+  padding-bottom: 2.2rem;
+}
+
+/* ---- The wax seal ---------------------------------------------------------- */
+.wax-seal {
+  --seal-size: clamp(96px, 20vmin, 140px);
+  position: absolute;
+  left: calc(50% - var(--seal-size) / 2);   /* centred on the rolled-up scroll */
+  top: calc(50% - var(--seal-size) / 2);
+  width: var(--seal-size);
+  height: var(--seal-size);
+  z-index: 2;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+  transition: transform 1.2s cubic-bezier(0.5, 0, 0.8, 0.4), opacity 1.2s ease;
+}
+.wax-seal svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.stamp-ring { fill: none; stroke: #3a060d; stroke-width: 3; opacity: 0.8; }
+.stamp-ring.thin { stroke: #9a2a38; stroke-width: 1; opacity: 0.6; }
+.stamp-letters {
+  font: bold 34px Georgia, "Times New Roman", serif;
+  text-anchor: middle;
+  letter-spacing: 1px;
+  stroke: #5e4210;
+  stroke-width: 0.6;
+}
+.crack {
+  fill: none;
+  stroke: #1a0205;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-dasharray: 130;
+  stroke-dashoffset: 130;   /* hidden: the dash hasn't "drawn" yet */
+}
+
+/* Breaking the seal: the crack runs across it, then the wax falls away. */
+.scroll.is-breaking .crack { transition: stroke-dashoffset 0.5s ease-in; stroke-dashoffset: 0; }
+.scroll.is-open .wax-seal {
+  transform: translateY(170%) rotate(25deg);
+  opacity: 0;
+}
+
+/* ---- The message ------------------------------------------------------------- */
+.message {
+  margin: 0;
+  text-align: center;
+  font: italic clamp(1.7rem, 5.2vw, 2.9rem)/1.3 Georgia, "Palatino Linotype", serif;
+}
+
+/* Each letter glows in its own colour and slowly cycles through purples, gold, green and pink.
+   Every letter starts a little later than the one before, so the colours ripple along. */
+.glowing-letter {
+  display: inline-block;
+  opacity: 0;
+  animation:
+    letter-appears 0.6s ease forwards,
+    colour-cycle 6s linear infinite;
+  text-shadow: 0 0 4px currentColor, 0 0 14px currentColor, 0 0 1px #2b1d12;
+  -webkit-text-stroke: 0.5px rgba(43, 29, 18, 0.55);
+}
+.glowing-letter.space { width: 0.3em; }
+/* Keep each word's letters together on one line. */
+.message > span:not(.glowing-letter) { display: inline-block; white-space: nowrap; }
+
+@keyframes letter-appears {
+  from { opacity: 0; transform: translateY(0.3em) scale(0.8); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes colour-cycle {
+  0%   { color: #b44cff; }
+  20%  { color: #7b2cbf; }
+  40%  { color: #e8c15a; }
+  60%  { color: #5fd35a; }
+  80%  { color: #ff6fae; }
+  100% { color: #b44cff; }
+}
+
+.hint {
+  margin: clamp(40px, 8vmin, 64px) 0 0;   /* below the wax seal, which hangs over the rolled-up scroll */
+  color: rgba(201, 167, 255, 0.55);
+  font: italic 0.95rem Georgia, serif;
+  letter-spacing: 0.08em;
+  transition: opacity 1s ease;
+}
+.hint.is-gone { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .paper, .wax-seal { transition-duration: 0.01s; }
+  .glowing-letter { animation: letter-appears 0.01s forwards; color: #b44cff; }
+}

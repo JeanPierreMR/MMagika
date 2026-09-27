@@ -1,0 +1,95 @@
+#medical-history {
+  z-index: 0;
+  background: #07060d;
+  overflow: hidden;
+  animation: slowly-appear 2.5s ease both;
+}
+@keyframes slowly-appear { from { opacity: 0; } to { opacity: 1; } }
+
+/* Every picture starts invisible. medical_history.js adds "is-showing" to one at a time. */
+.picture {
+  position: absolute;
+  margin: 0;
+  width: min(62vmin, 560px);
+  opacity: 0;
+  transition: opacity 2.2s ease;
+}
+.picture.is-showing {
+  opacity: 0.6;
+  animation: drift 9s ease-out both;   /* slow zoom and slide, like a camera moving over the picture */
+}
+.picture img, .picture svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  /* Most of these are drawings on pale paper. Turning them into a negative (like an X-ray)
+     makes the paper dark and the lines glow, so the paper vanishes into the night. */
+  filter: invert(1) grayscale(1) contrast(1.2);
+}
+/* Rembrandt's painting is already dark, so it is not turned into a negative. */
+.picture.dark-painting img { filter: grayscale(1) sepia(0.3) contrast(1.15); }
+
+/* "screen" blending: bright parts shine through, dark parts disappear, and overlapping
+   pictures glow through each other like the House M.D. opening titles. */
+.picture { mix-blend-mode: screen; }
+
+/* Three places a picture can sit, so they overlap like in a film's opening titles. */
+.spot-left   { left: 6%;  top: 12%; }
+.spot-right  { right: 6%; top: 18%; }
+.spot-middle { left: 50%; top: 8%; margin-left: max(-31vmin, -280px); }
+
+@keyframes drift {
+  from { transform: scale(1.12) translate(-2%, 1%); }
+  to   { transform: scale(1)    translate(1%, -1%); }
+}
+
+.picture figcaption {
+  margin-top: 0.6rem;
+  color: #e8c15a;
+  font-size: clamp(0.8rem, 1.4vw, 1rem);
+  font-variant: small-caps;
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+
+/* Today's heartbeat: a lavender line that draws itself. */
+.heartbeat svg { filter: none; mix-blend-mode: normal; }
+.heartbeat polyline {
+  fill: none;
+  stroke: #c9a7ff;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-dasharray: 700;
+  stroke-dashoffset: 700;
+}
+.heartbeat.is-showing polyline { animation: draw-heartbeat 2.5s ease-out forwards; }
+@keyframes draw-heartbeat { to { stroke-dashoffset: 0; } }
+
+.purple-wash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, rgba(123, 44, 191, 0.35), rgba(59, 10, 87, 0.55) 70%);
+  mix-blend-mode: color;   /* tints the grey pictures purple */
+}
+
+.picture-credits {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  font: 0.72rem/1.4 system-ui, sans-serif;
+  color: rgba(201, 167, 255, 0.7);
+}
+.picture-credits a { color: inherit; pointer-events: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .picture.is-showing { animation: none; }
+  .heartbeat polyline { stroke-dashoffset: 0; }
+}

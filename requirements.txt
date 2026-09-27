@@ -1,0 +1,4 @@
+# The Python packages this site needs. Exact versions, so every build is identical.
+Django==6.0.8        # the web framework: turns web addresses into pages
+whitenoise==6.12.0   # lets Django hand out our pictures, styles and scripts quickly
+gunicorn==26.2.0     # the program that actually runs Django on the server

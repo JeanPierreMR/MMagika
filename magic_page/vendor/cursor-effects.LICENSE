@@ -1,0 +1,5 @@
+cursor-effects 1.0.18 by Tim Holman — https://github.com/tholman/cursor-effects
+
+The package declares "license": "MIT" in its npm package.json, and the project README says
+"MIT af". The GitHub repository does not include a LICENSE file, so this note records where
+the MIT licence is stated. The MIT licence text: https://opensource.org/license/mit

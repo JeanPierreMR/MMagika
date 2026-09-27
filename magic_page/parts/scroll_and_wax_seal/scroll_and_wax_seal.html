@@ -1,0 +1,50 @@
+{% load static %}
+{% comment %}
+  THE SCROLL AND WAX SEAL: a rolled-up scroll in the middle of the screen,
+  sealed with dark red wax stamped "MD" in gold. The healing spell breaks the
+  seal and the scroll unrolls to show its message.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'scroll_and_wax_seal/scroll_and_wax_seal.css' %}" nonce="{{ csp_nonce }}">
+
+<div id="scroll-layer" class="layer">
+  <div id="scroll" class="scroll is-closed">
+    <div class="roller"></div>
+    <div class="paper">
+      {# scroll_and_wax_seal.js writes the message here, one glowing letter at a time. #}
+      <p id="scroll-message" class="message" aria-live="polite"></p>
+    </div>
+    <div class="roller"></div>
+
+    {# The seal sits in a plain box; the box does the positioning and falling (browsers treat boxes more consistently than drawings). #}
+    <div class="wax-seal">
+    <svg id="wax-seal" viewBox="0 0 120 120" role="img" aria-label="A dark red wax seal stamped MD">
+      <defs>
+        <radialGradient id="wax-colour" cx="40%" cy="35%" r="70%">
+          <stop offset="0%" stop-color="#8e1a28"/>
+          <stop offset="55%" stop-color="#5c0b14"/>
+          <stop offset="100%" stop-color="#2e040a"/>
+        </radialGradient>
+        <linearGradient id="gold-letters" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fff0b0"/>
+          <stop offset="50%" stop-color="#e8c15a"/>
+          <stop offset="100%" stop-color="#a87a22"/>
+        </linearGradient>
+      </defs>
+      {# The uneven, melted outer edge. scroll_and_wax_seal.js draws its shape. #}
+      <path id="melted-wax-edge" fill="url(#wax-colour)"/>
+      {# The round stamp pressed into the middle of the wax. #}
+      <circle cx="60" cy="60" r="36" class="stamp-ring"/>
+      <circle cx="60" cy="60" r="31" class="stamp-ring thin"/>
+      <text x="60" y="71" class="stamp-letters" fill="url(#gold-letters)">MD</text>
+      {# The crack, invisible until the seal breaks. #}
+      <path class="crack" d="M58 8 L63 30 L55 48 L66 66 L57 84 L62 112"/>
+    </svg>
+    </div>
+  </div>
+  <p id="scroll-hint" class="hint">hold the click and draw a cross</p>
+</div>
+
+{# The hearts that glitter out of the word "heart" are drawn on this canvas. #}
+<canvas id="heart-glitter" class="layer" aria-hidden="true"></canvas>
+
+<script type="module" src="{% static 'scroll_and_wax_seal/scroll_and_wax_seal.js' %}" nonce="{{ csp_nonce }}"></script>

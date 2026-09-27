@@ -1,0 +1,45 @@
+.swirling-portal {
+  position: fixed;
+  z-index: 50;
+  width: 320px;
+  height: 320px;
+  margin: -160px 0 0 -160px;       /* so its position is its centre */
+  pointer-events: none;
+  animation: portal-opens-and-closes 3s ease-in-out forwards;
+}
+
+/* A disc of purple bands that spins, with a dark hole in the middle. */
+.swirl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #07060d 0%, #07060d 14%, rgba(7, 6, 13, 0) 42%),
+    conic-gradient(#3b0a57, #b44cff, #7b2cbf, #c9a7ff, #3b0a57, #b44cff, #7b2cbf, #c9a7ff, #3b0a57);
+  box-shadow: 0 0 60px 10px rgba(180, 76, 255, 0.55);
+  animation: spin 1.1s linear infinite;
+}
+.swirl.inner {
+  width: 60%;
+  height: 60%;
+  top: 20%;
+  left: 20%;
+  opacity: 0.8;
+  animation-duration: 0.7s;
+  animation-direction: reverse;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes portal-opens-and-closes {
+  0%   { transform: scale(0); opacity: 0; }
+  20%  { transform: scale(1); opacity: 1; }
+  75%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(0) rotate(180deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swirl { animation: none; }
+}

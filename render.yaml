@@ -1,0 +1,15 @@
+# Render Blueprint: tells Render how to run this site.
+# In Render: New → Blueprint → pick this repository.
+services:
+  - type: web
+    name: mmagika
+    runtime: docker             # build with the Dockerfile in this folder
+    plan: free                  # free sites sleep after ~15 minutes idle; "starter" stays awake
+    healthCheckPath: /healthz
+    autoDeploy: true            # every push to GitHub redeploys
+    envVars:
+      - key: DJANGO_SECRET_KEY  # Render makes a long random secret for us
+        generateValue: true
+      # Using your own domain? Add it here, comma separated:
+      # - key: DJANGO_ALLOWED_HOSTS
+      #   value: mmagika.com,www.mmagika.com

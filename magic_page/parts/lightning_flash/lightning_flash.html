@@ -1,0 +1,5 @@
+{% load static %}
+{# THE LIGHTNING FLASH: the whole screen flashes white-violet when someone draws a zigzag. #}
+<link rel="stylesheet" href="{% static 'lightning_flash/lightning_flash.css' %}" nonce="{{ csp_nonce }}">
+<div id="lightning-flash" class="layer" hidden aria-hidden="true"></div>
+<script type="module" src="{% static 'lightning_flash/lightning_flash.js' %}" nonce="{{ csp_nonce }}"></script>

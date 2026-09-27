@@ -1,0 +1,40 @@
+#golden-winged-ball {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.ball {
+  position: absolute;
+  width: 90px;
+  height: 45px;
+  margin: -22px 0 0 -45px;          /* so its position is the centre of the ball */
+  overflow: visible;
+  filter: drop-shadow(0 0 10px rgba(232, 193, 90, 0.75));
+}
+
+/* Wings flap by quickly tilting up and down around where they meet the ball. */
+.wing { transform-box: view-box; animation: flap 0.14s ease-in-out infinite alternate; }
+.left-wing  { transform-origin: 48px 31px; }
+.right-wing { transform-origin: 72px 31px; animation-name: flap-right; }
+@keyframes flap       { from { transform: rotate(18deg); }  to { transform: rotate(-22deg); } }
+@keyframes flap-right { from { transform: rotate(-18deg); } to { transform: rotate(22deg); } }
+
+.wing-veins { fill: none; stroke: rgba(184, 135, 42, 0.55); stroke-width: 0.6; }
+.engraving  { fill: none; stroke: rgba(110, 76, 18, 0.7); stroke-width: 0.8; }
+
+/* The shimmer: small golden glows trailing behind. */
+.shimmer {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 240, 180, 0.9), rgba(232, 193, 90, 0) 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wing { animation: none; }
+}

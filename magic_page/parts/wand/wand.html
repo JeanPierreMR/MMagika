@@ -1,0 +1,6 @@
+{% load static %}
+{# THE WAND: sparkles follow the mouse; holding the click draws a red line. #}
+<link rel="stylesheet" href="{% static 'wand/wand.css' %}" nonce="{{ csp_nonce }}">
+<canvas id="red-line" class="layer" aria-hidden="true"></canvas>
+<p class="for-screen-readers">Hold the mouse button and draw a cross or a triangle to open the scroll.</p>
+<script type="module" src="{% static 'wand/wand.js' %}" nonce="{{ csp_nonce }}"></script>
