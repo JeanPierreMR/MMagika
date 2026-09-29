@@ -1,16 +1,16 @@
 # MMagika
 
-A night sky full of pulsing stars. Glowing purple-green eyes watch you from the dark corners, with a faint glint of red fangs beneath. In the middle sits a scroll sealed with dark red wax, stamped **MD** in gold.
+A sparse night sky of pulsing stars. Two pairs of glowing purple-green eyes appear now and then in the dark corners, with a faint glint of red fangs beneath. In the middle sits a black scroll with a soft purple glow, sealed with dark red wax stamped **MD** in gold. A golden winged ball flutters about, always keeping away from your mouse.
 
-Move the mouse and sparkles follow it. **Hold the click** and you draw a glowing red line. Draw the right shape and something happens:
+Move the mouse and sparkles follow it. **Hold the click** and you draw a glowing, glittering green line. Draw the right shape and something happens:
 
 | Draw (holding the click) | What happens |
 |---|---|
-| **A cross** (two lines) or its outline, or **a triangle** | **The healing spell.** The background becomes a slideshow of medical history, oldest first (House M.D.-opening style). A golden winged ball starts flying around. The stars turn into coloured crosses. The seal cracks, the scroll unrolls, and it reads **"Live with all your heart"** in glowing, colour-changing letters, with hearts glittering out of the word *heart*. |
-| **A spiral** | A swirling purple portal opens where you drew it. |
+| **A cross** (a `+` or a `†`, as two lines or as a whole silhouette) or **a triangle** | **The healing spell.** The stars turn into coloured crosses. Memories of medicine flood the screen one after another, each shown once, oldest first (House M.D.-opening style), then settle into the background, smaller, drifting in and out. The seal cracks, the scroll unrolls, and the letter appears in glowing gothic gold with colours flowing through it and sparks flying off (the effect from `decree.html`). The golden ball stops fleeing and flies freely. |
+| **A spiral** | A translucent swirling purple portal opens where you drew it. |
 | **A zigzag** (or a lightning bolt) | The screen flashes and jolts. |
 
-A little pixel cat also chases your mouse around.
+A violet **enchanted clock** (Mayan numerals, rings of runes, today's date, the real time) follows your mouse: its details stream after it like a ribbon, and its circles and triangles fade and redraw themselves wherever the mouse comes to rest (a click summons them at once). Space pauses its turning ornaments; Escape recentres it. A little pixel cat also chases your mouse around.
 
 ---
 
@@ -30,13 +30,14 @@ Each JavaScript file starts by answering: *What starts it? What does it use? Wha
 |---|---|
 | `whole_page/` | Colours (several purples) and basic layout shared by everything |
 | `night_sky/` | The pulsing stars; later turns them into coloured crosses |
-| `watching_eyes/` | Dark corners, and eyes that appear, follow the mouse, blink and vanish |
-| `wand/` | Sparkles, plus the red line while you hold the click (it stays until 1 second after you let go) |
+| `enchanted_clock/` | The violet clock that follows the mouse (ported from Arcane Hours, "teleport" version) |
+| `watching_eyes/` | Dark corners, and two pairs of eyes that slowly appear, follow the mouse, blink lazily and vanish |
+| `wand/` | Sparkles, plus the glittering green line while you hold the click (it stays until 1 second after you let go) |
 | `spellbook/` | Reads what shape you drew (`shape_reader.js`) and casts the matching spell |
 | `healing_spell/` | The main story, in order |
-| `medical_history/` | The slideshow pictures, with `image_credits.md` |
-| `golden_winged_ball/` | The flying golden ball |
-| `scroll_and_wax_seal/` | The scroll, the melted-wax seal, the glowing message and the hearts |
+| `medical_history/` | The pictures: the flood of memories, then the quiet background (credits in `image_credits.md`) |
+| `golden_winged_ball/` | The golden ball: shy of the mouse at first, free once the scroll opens |
+| `scroll_and_wax_seal/` | The black scroll and melted-wax seal. **The letter's text is in `letter.html`**; `letter_in_gold.js` draws it in gold |
 | `swirling_portal/`, `lightning_flash/` | The spiral and zigzag spells |
 | `pixel_cat/` | Loads the borrowed pixel cat |
 

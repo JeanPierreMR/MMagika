@@ -15,22 +15,22 @@
 /* One pair of eyes. Invisible until watching_eyes.js adds "is-awake". */
 .watcher {
   position: absolute;
-  width: clamp(80px, 11vw, 150px);
+  width: clamp(54px, 7vw, 100px);
   opacity: 0;
-  transition: opacity 1.2s ease;
+  transition: opacity 3s ease;
 }
 .watcher svg { display: block; width: 100%; height: auto; overflow: visible; }
-.watcher.is-awake { opacity: 1; }
+.watcher.is-awake { opacity: 0.85; }
 
 /* Eyelids: an eye is squashed flat (closed) and opens when the watcher wakes up. */
 .eye {
   transform-box: fill-box;
   transform-origin: center;
   transform: scaleY(0.05);
-  transition: transform 0.35s ease;
+  transition: transform 0.9s ease;
 }
-.watcher.is-awake .eye { transform: scaleY(1); transition-delay: 0.8s; }
-.watcher.is-awake.is-blinking .eye { transform: scaleY(0.08); transition-duration: 0.1s; transition-delay: 0s; }
+.watcher.is-awake .eye { transform: scaleY(1); transition-delay: 1.8s; }
+.watcher.is-awake.is-blinking .eye { transform: scaleY(0.06); transition-duration: 0.45s; transition-delay: 0s; }
 
 .pupil { fill: #030104; }
 

@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Doctor of Enchantment · Arcane Academy</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet" />
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { height: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100%;
+    padding: 6.2rem clamp(1rem, 5vw, 3rem) clamp(2rem, 7vh, 5rem);
+    display: grid;
+    place-items: center;
+    background: #000000;
+    color: #efe4c8;
+    font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ─────────────────────────  ENCHANTED BACKDROP  ───────────────────────── */
+
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: #000000;
+  }
+
+  .aurora {
+    position: fixed;
+    inset: -25%;
+    z-index: 1;
+    pointer-events: none;
+    filter: blur(90px);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  body.aurora-on .aurora { opacity: 0.85; }
+
+  .aurora i {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    will-change: transform;
+  }
+  .aurora i:nth-child(1) {
+    width: 48vmax; height: 40vmax; left: 2%; top: 0%;
+    background: radial-gradient(circle at 50% 50%, rgba(126,92,255,.42), rgba(126,92,255,0) 70%);
+    animation: drift-a 38s ease-in-out infinite;
+  }
+  .aurora i:nth-child(2) {
+    width: 42vmax; height: 42vmax; right: 0%; top: 16%;
+    background: radial-gradient(circle at 50% 50%, rgba(255,110,175,.26), rgba(255,110,175,0) 70%);
+    animation: drift-b 46s ease-in-out infinite;
+  }
+  .aurora i:nth-child(3) {
+    width: 54vmax; height: 34vmax; left: 20%; bottom: -8%;
+    background: radial-gradient(circle at 50% 50%, rgba(80,222,208,.22), rgba(80,222,208,0) 70%);
+    animation: drift-c 54s ease-in-out infinite;
+  }
+
+  @keyframes drift-a {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50%      { transform: translate3d(6vw, 4vh, 0) scale(1.15); }
+  }
+  @keyframes drift-b {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+    50%      { transform: translate3d(-7vw, 6vh, 0) scale(0.92); }
+  }
+  @keyframes drift-c {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50%      { transform: translate3d(4vw, -5vh, 0) scale(1.12); }
+  }
+
+  /* ─────────────────────────  CONTROL PANEL  ───────────────────────── */
+
+  .controls {
+    position: fixed;
+    top: 0.85rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    width: min(96vw, 1160px);
+    border-radius: 14px;
+    border: 1px solid rgba(230, 200, 126, 0.22);
+    background: linear-gradient(180deg, rgba(16, 12, 32, 0.88), rgba(4, 3, 10, 0.92));
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    box-shadow:
+      0 10px 40px rgba(0, 0, 0, 0.7),
+      0 0 0 1px rgba(255, 230, 170, 0.04) inset,
+      0 0 40px rgba(180, 140, 255, 0.08);
+    font-family: "Cinzel", Georgia, serif;
+    color: #e6d9b4;
+    overflow: hidden;
+  }
+
+  .controls-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.55rem 0.9rem 0.55rem 1rem;
+    border-bottom: 1px solid rgba(230, 200, 126, 0.12);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .controls-header span {
+    font-size: 0.58rem;
+    letter-spacing: 0.42em;
+    text-indent: 0.42em;
+    text-transform: uppercase;
+    color: #e6c87e;
+    text-shadow: 0 0 12px rgba(230, 200, 126, 0.4);
+  }
+
+  .controls-toggle {
+    background: none;
+    border: 1px solid rgba(230, 200, 126, 0.3);
+    color: #e6c87e;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-family: inherit;
+    font-size: 0.75rem;
+    line-height: 1;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    transition: background 0.25s ease;
+  }
+  .controls-toggle:hover { background: rgba(230, 200, 126, 0.15); }
+
+  .controls-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.55rem 1.1rem;
+    padding: 0.75rem 1rem 0.95rem;
+    transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease;
+    max-height: 520px;
+    opacity: 1;
+  }
+
+  .controls.collapsed .controls-body {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+  }
+
+  .ctrl {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    column-gap: 0.5rem;
+    align-items: center;
+    font-size: 0.55rem;
+    letter-spacing: 0.14em;
+  }
+  .ctrl > span {
+    grid-column: 1 / 2;
+    text-transform: uppercase;
+    color: rgba(230, 200, 126, 0.82);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ctrl > output {
+    grid-column: 2 / 3;
+    font-variant-numeric: tabular-nums;
+    color: #fff0c8;
+    font-size: 0.6rem;
+  }
+
+  .ctrl input[type="range"] {
+    grid-column: 1 / 3;
+    width: 100%;
+    height: 16px;
+    margin: 0.15rem 0 0;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  .ctrl input[type="range"]::-webkit-slider-runnable-track {
+    height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg,
+      rgba(230, 200, 126, 0.15),
+      rgba(230, 200, 126, 0.55),
+      rgba(180, 140, 255, 0.4));
+  }
+  .ctrl input[type="range"]::-moz-range-track {
+    height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg,
+      rgba(230, 200, 126, 0.15),
+      rgba(230, 200, 126, 0.55),
+      rgba(180, 140, 255, 0.4));
+  }
+  .ctrl input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 11px; height: 11px; margin-top: -4.5px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff8e2, #e6c87e 55%, #a8853f 100%);
+    box-shadow: 0 0 8px rgba(255, 226, 150, 0.85), 0 0 2px rgba(255, 255, 255, 0.8);
+    border: none;
+  }
+  .ctrl input[type="range"]::-moz-range-thumb {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff8e2, #e6c87e 55%, #a8853f 100%);
+    box-shadow: 0 0 8px rgba(255, 226, 150, 0.85), 0 0 2px rgba(255, 255, 255, 0.8);
+    border: none;
+  }
+
+  .ctrl.toggle {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto;
+    gap: 0.55rem;
+  }
+  .ctrl.toggle > span { grid-column: 1; }
+  .ctrl.toggle input[type="checkbox"] {
+    grid-column: 2;
+    appearance: none; -webkit-appearance: none;
+    width: 32px; height: 16px; border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(230, 200, 126, 0.32);
+    position: relative; cursor: pointer; margin: 0;
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+  .ctrl.toggle input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 1.5px; left: 1.5px;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: #8b7a52;
+    transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+  }
+  .ctrl.toggle input[type="checkbox"]:checked {
+    background: rgba(230, 200, 126, 0.22);
+    border-color: rgba(230, 200, 126, 0.6);
+  }
+  .ctrl.toggle input[type="checkbox"]:checked::after {
+    transform: translateX(15px);
+    background: radial-gradient(circle at 35% 30%, #fff8e2, #e6c87e 60%, #a8853f);
+    box-shadow: 0 0 8px rgba(255, 226, 150, 0.9);
+  }
+
+  .ctrl.section-label {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    margin-top: 0.25rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(230, 200, 126, 0.1);
+  }
+  .ctrl.section-label > span {
+    grid-column: 1;
+    font-size: 0.5rem;
+    letter-spacing: 0.34em;
+    color: rgba(230, 200, 126, 0.5);
+  }
+
+  /* ─────────────────────────  THE DECREE  ───────────────────────── */
+
+  .card {
+    position: relative;
+    z-index: 3;
+    width: min(100%, 1080px);
+    text-align: center;
+    animation: cardFloat 16s ease-in-out infinite;
+  }
+
+  @keyframes cardFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .eyebrow {
+    margin: 0 0 clamp(1.4rem, 3.6vw, 2.4rem);
+    font-family: "Cinzel", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(0.56rem, 1.15vw, 0.8rem);
+    letter-spacing: 0.62em;
+    text-indent: 0.62em;
+    text-transform: uppercase;
+    color: #e6c87e;
+    opacity: 0.9;
+    text-shadow: 0 0 14px rgba(230, 200, 126, 0.45);
+  }
+
+  .decree-svg {
+    display: block;
+    width: 100%;
+    max-width: 1060px;
+    height: auto;
+    margin: 0 auto;
+    overflow: visible;
+    opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  .decree-svg.ready { opacity: 1; }
+
+  /* ── gold outline on the letterforms.
+       stroke-width / stroke-opacity are set as INLINE styles on each
+       <text> from applyOutline(), which reliably beats this rule. The
+       values here are just a safe fallback for the first paint. ── */
+  #letters text {
+    fill: none;
+    stroke: url(#goldStroke);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .spark {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: sparkFlow var(--dur, 5s) ease-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
+
+  @keyframes sparkFlow {
+    0% {
+      opacity: 0;
+      transform: translate(0px, 0px) scale(0.18) rotate(0deg);
+    }
+    14% {
+      opacity: 1;
+      transform: translate(calc(var(--dx) * 0.14), calc(var(--dy) * 0.14)) scale(1) rotate(20deg);
+    }
+    65% { opacity: 0.6; }
+    100% {
+      opacity: 0;
+      transform: translate(var(--dx), var(--dy)) scale(0.06) rotate(90deg);
+    }
+  }
+
+  .decree-svg.paused .spark { animation-play-state: paused; }
+  body.paused .aurora i,
+  body.paused .card { animation-play-state: paused; }
+
+  .ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: min(58%, 380px);
+    margin: clamp(1.4rem, 3.4vw, 2.2rem) auto clamp(1rem, 2.6vw, 1.6rem);
+  }
+  .ornament::before,
+  .ornament::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(230, 200, 126, 0.72), transparent);
+  }
+  .ornament span {
+    flex: 0 0 auto;
+    width: 6px; height: 6px;
+    transform: rotate(45deg);
+    background: #ffe9ae;
+    box-shadow:
+      0 0 12px rgba(255, 226, 150, 0.9),
+      0 0 3px rgba(255, 255, 255, 0.85);
+  }
+
+  .subtitle {
+    margin: 0;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(1.05rem, 2.4vw, 1.55rem);
+    letter-spacing: 0.02em;
+    color: #f0e5cb;
+    text-shadow: 0 0 24px rgba(255, 220, 150, 0.28);
+  }
+
+  .fineprint {
+    margin: clamp(0.9rem, 2.4vw, 1.4rem) 0 0;
+    font-family: "Cinzel", Georgia, serif;
+    font-size: clamp(0.52rem, 1vw, 0.68rem);
+    letter-spacing: 0.42em;
+    text-indent: 0.42em;
+    text-transform: uppercase;
+    color: rgba(230, 200, 126, 0.62);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurora i, .card { animation: none !important; }
+    .spark {
+      animation: none !important;
+      opacity: 0.55;
+      transform: translate(calc(var(--dx) * 0.35), calc(var(--dy) * 0.35)) scale(0.7);
+    }
+  }
+</style>
+</head>
+
+<body>
+
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <div class="aurora" aria-hidden="true">
+    <i></i><i></i><i></i>
+  </div>
+
+  <!-- ─────────────── CONTROL PANEL ─────────────── -->
+  <aside class="controls" id="controls">
+    <div class="controls-header" id="controlsHeader">
+      <span>Enchantment Controls</span>
+      <button class="controls-toggle" id="controlsToggle" type="button" aria-expanded="true" aria-label="Toggle controls">−</button>
+    </div>
+
+    <div class="controls-body" id="controlsBody">
+
+      <div class="ctrl section-label"><span>Letters &amp; Outline</span></div>
+
+      <label class="ctrl">
+        <span>Outline weight</span>
+        <output id="out-outlineWeight">2.00</output>
+        <input type="range" id="outlineWeight" min="0" max="8" step="0.05" value="2" />
+      </label>
+
+      <label class="ctrl">
+        <span>Outline glow</span>
+        <output id="out-outlineGlow">1.00×</output>
+        <input type="range" id="outlineGlow" min="0" max="3" step="0.05" value="1" />
+      </label>
+
+      <label class="ctrl">
+        <span>Outline opacity</span>
+        <output id="out-outlineOpacity">1.00</output>
+        <input type="range" id="outlineOpacity" min="0" max="1" step="0.02" value="1" />
+      </label>
+
+      <div class="ctrl section-label"><span>Colour Field</span></div>
+
+      <label class="ctrl">
+        <span>Colour dots</span>
+        <output id="out-dotCount">220</output>
+        <input type="range" id="dotCount" min="0" max="500" step="10" value="220" />
+      </label>
+
+      <label class="ctrl">
+        <span>Dot speed</span>
+        <output id="out-dotSpeed">1.00×</output>
+        <input type="range" id="dotSpeed" min="0" max="2.5" step="0.05" value="1" />
+      </label>
+
+      <label class="ctrl">
+        <span>Dot size</span>
+        <output id="out-dotSize">1.00×</output>
+        <input type="range" id="dotSize" min="0.4" max="2.2" step="0.05" value="1" />
+      </label>
+
+      <label class="ctrl">
+        <span>Dot brightness</span>
+        <output id="out-dotBright">1.00×</output>
+        <input type="range" id="dotBright" min="0.4" max="1.6" step="0.05" value="1" />
+      </label>
+
+      <label class="ctrl">
+        <span>Rainbow spread</span>
+        <output id="out-hueSpread">340°</output>
+        <input type="range" id="hueSpread" min="0" max="900" step="20" value="340" />
+      </label>
+
+      <label class="ctrl">
+        <span>Softness</span>
+        <output id="out-blur">14</output>
+        <input type="range" id="blur" min="0" max="34" step="1" value="14" />
+      </label>
+
+      <div class="ctrl section-label"><span>Sparks</span></div>
+
+      <label class="ctrl">
+        <span>Spark density</span>
+        <output id="out-sparkDensity">0.50</output>
+        <input type="range" id="sparkDensity" min="0" max="1" step="0.05" value="0.5" />
+      </label>
+
+      <label class="ctrl">
+        <span>Spark speed</span>
+        <output id="out-sparkSpeed">1.0×</output>
+        <input type="range" id="sparkSpeed" min="0.2" max="3" step="0.1" value="1" />
+      </label>
+
+      <label class="ctrl">
+        <span>Spark reach</span>
+        <output id="out-sparkReach">1.0×</output>
+        <input type="range" id="sparkReach" min="0.3" max="2.5" step="0.1" value="1" />
+      </label>
+
+      <div class="ctrl section-label"><span>Atmosphere</span></div>
+
+      <label class="ctrl toggle">
+        <span>Aurora glow</span>
+        <input type="checkbox" id="auroraToggle" />
+      </label>
+
+      <label class="ctrl toggle">
+        <span>Animate</span>
+        <input type="checkbox" id="animateToggle" checked />
+      </label>
+
+    </div>
+  </aside>
+
+  <main class="card">
+
+    <p class="eyebrow">By Decree of the Arcane Academy</p>
+
+    <h1 class="sr-only">
+      Let it be known that the bearer of this decree has walked the lantern-lit
+      halls of the Arcane Academy, mastered the seven radiant disciplines, and
+      by patience and quiet wonder earned the title of Doctor of Enchantment.
+    </h1>
+
+    <svg id="decreeSvg"
+         class="decree-svg"
+         viewBox="0 0 1200 520"
+         preserveAspectRatio="xMidYMid meet"
+         aria-hidden="true"
+         focusable="false">
+
+      <defs>
+        <linearGradient id="goldStroke" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0"    stop-color="#8a6a22"/>
+          <stop offset="0.2"  stop-color="#f4dc9a"/>
+          <stop offset="0.44" stop-color="#c9a13f"/>
+          <stop offset="0.62" stop-color="#fff3c9"/>
+          <stop offset="0.82" stop-color="#c9a13f"/>
+          <stop offset="1"    stop-color="#7d5f1e"/>
+        </linearGradient>
+
+        <radialGradient id="glowGrad">
+          <stop offset="0%"   stop-color="#fff4c8" stop-opacity="0.9"/>
+          <stop offset="55%"  stop-color="#ffd98a" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="#ffd98a" stop-opacity="0"/>
+        </radialGradient>
+
+        <radialGradient id="haloGrad">
+          <stop offset="0%"   stop-color="#ffd9a0" stop-opacity="0.16"/>
+          <stop offset="55%"  stop-color="#b48cff" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#b48cff" stop-opacity="0"/>
+        </radialGradient>
+
+        <filter id="dotBlur"
+                x="-60%" y="-60%" width="220%" height="220%"
+                color-interpolation-filters="sRGB">
+          <feGaussianBlur id="dotBlurNode" stdDeviation="14"/>
+        </filter>
+
+        <mask id="textMask"
+              maskUnits="userSpaceOnUse"
+              x="-2000" y="-2000" width="8000" height="8000">
+          <g id="maskGlyphs" fill="#fff"></g>
+        </mask>
+      </defs>
+
+      <ellipse id="halo" cx="600" cy="260" rx="700" ry="260" fill="url(#haloGrad)"/>
+
+      <g mask="url(#textMask)">
+        <g id="dotsG" filter="url(#dotBlur)" style="mix-blend-mode: screen;"></g>
+      </g>
+
+      <g id="letters"></g>
+
+      <g id="sparkles"></g>
+    </svg>
+
+    <div class="ornament" aria-hidden="true"><span></span></div>
+
+    <p class="subtitle">Conferred upon the Keeper of Wondrous Arts</p>
+    <p class="fineprint">Given beneath a waning moon &middot; MMXXVI</p>
+
+  </main>
+
+<script>
+(function () {
+  'use strict';
+
+  var NS = 'http://www.w3.org/2000/svg';
+
+  var svg       = document.getElementById('decreeSvg');
+  var lettersG  = document.getElementById('letters');
+  var maskG     = document.getElementById('maskGlyphs');
+  var dotsG     = document.getElementById('dotsG');
+  var sparklesG = document.getElementById('sparkles');
+  var halo      = document.getElementById('halo');
+  var blurNode  = document.getElementById('dotBlurNode');
+
+  var PARAGRAPH =
+    'Let it be known that the bearer of this decree has walked the ' +
+    'lantern-lit halls of the Arcane Academy, mastered the seven ' +
+    'radiant disciplines, and by patience and quiet wonder earned ' +
+    'the title of Doctor of Enchantment.';
+
+  var FONT_FAMILY = "'Cinzel', Georgia, serif";
+  var FONT_SIZE   = 42;
+  var FONT_WEIGHT = 600;
+  var TRACKING    = 2;
+  var LINE_HEIGHT = 60;
+  var MAX_WIDTH   = 1040;
+
+  var CFG = {
+    outlineWeight:  2.0,
+    outlineGlow:    1.0,
+    outlineOpacity: 1.0,
+
+    dotCount:     220,
+    dotSpeed:     1,
+    dotSize:      1,
+    dotBright:    1,
+    hueSpread:    340,
+    blur:         14,
+
+    sparkDensity: 0.5,
+    sparkSpeed:   1,
+    sparkReach:   1,
+
+    aurora:  false,
+    animate: true
+  };
+
+  var reduceMotion = !!(window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  if (reduceMotion) {
+    CFG.animate = false;
+    var animToggle0 = document.getElementById('animateToggle');
+    if (animToggle0) animToggle0.checked = false;
+  }
+
+  var dots = [];
+  var dotEls = [];
+  var dotBounds = null;
+  var rafId = null;
+  var lastTime = 0;
+  var rebuildTimer = null;
+
+  var GLOW_BASE = {
+    close: { blur: 7,  color: 'rgba(255, 216, 140, 0.38)' },
+    wide:  { blur: 28, color: 'rgba(186, 148, 255, 0.28)' }
+  };
+
+  function make(name, attrs) {
+    var el = document.createElementNS(NS, name);
+    if (attrs) {
+      for (var k in attrs) {
+        if (Object.prototype.hasOwnProperty.call(attrs, k)) {
+          el.setAttribute(k, attrs[k]);
+        }
+      }
+    }
+    return el;
+  }
+
+  function glyph(ch, x, y) {
+    var t = make('text', {
+      x: x.toFixed(2),
+      y: y.toFixed(2),
+      'font-family': FONT_FAMILY,
+      'font-size': FONT_SIZE,
+      'font-weight': FONT_WEIGHT,
+      'letter-spacing': TRACKING
+    });
+    t.textContent = ch;
+    /* Inline stroke styles so the letters render immediately, and so
+       the controls can drive them reliably (inline > CSS rule). */
+    t.style.strokeWidth = CFG.outlineWeight.toFixed(3);
+    t.style.strokeOpacity = CFG.outlineOpacity.toFixed(3);
+    return t;
+  }
+
+  function buildParagraph() {
+    var probe = make('text', {
+      x: 0, y: 0,
+      'font-family': FONT_FAMILY,
+      'font-size': FONT_SIZE,
+      'font-weight': FONT_WEIGHT,
+      'letter-spacing': TRACKING,
+      fill: 'none'
+    });
+    svg.appendChild(probe);
+
+    function measure(str) {
+      probe.textContent = str;
+      return probe.getComputedTextLength();
+    }
+
+    var words = PARAGRAPH.split(/\s+/);
+    var lines = [];
+    var cur = '';
+
+    for (var w = 0; w < words.length; w++) {
+      var word = words[w];
+      if (!word) continue;
+      var cand = cur ? cur + ' ' + word : word;
+      if (cur && measure(cand) > MAX_WIDTH) {
+        lines.push(cur);
+        cur = word;
+      } else {
+        cur = cand;
+      }
+    }
+    if (cur) lines.push(cur);
+
+    lettersG.textContent = '';
+    maskG.textContent = '';
+
+    lines.forEach(function (lineText, li) {
+      probe.textContent = lineText;
+      var natural = probe.getComputedTextLength();
+
+      var chars = [];
+      for (var i = 0; i < lineText.length; i++) {
+        chars.push({
+          ch: lineText.charAt(i),
+          x: probe.getStartPositionOfChar(i).x
+        });
+      }
+
+      var gaps = 0;
+      chars.forEach(function (c) { if (c.ch === ' ') gaps++; });
+
+      var isLast = (li === lines.length - 1);
+      var justify = (!isLast && gaps > 0 && natural < MAX_WIDTH);
+      var extra = justify ? (MAX_WIDTH - natural) / gaps : 0;
+      var left  = (isLast || gaps === 0) ? (MAX_WIDTH - natural) / 2 : 0;
+
+      var seen = 0;
+      var y = li * LINE_HEIGHT;
+
+      chars.forEach(function (c) {
+        if (c.ch === ' ') { seen++; return; }
+        var x = c.x + left + extra * seen;
+        lettersG.appendChild(glyph(c.ch, x, y));
+        maskG.appendChild(glyph(c.ch, x, y));
+      });
+    });
+
+    if (probe.parentNode) probe.parentNode.removeChild(probe);
+    return lines.length;
+  }
+
+  function fitViewBox() {
+    var b;
+    try { b = lettersG.getBBox(); } catch (e) { return null; }
+    if (!b || !b.width) return null;
+
+    var pad = 82;
+
+    svg.setAttribute('viewBox',
+      (b.x - pad).toFixed(1) + ' ' +
+      (b.y - pad).toFixed(1) + ' ' +
+      (b.width + pad * 2).toFixed(1) + ' ' +
+      (b.height + pad * 2).toFixed(1)
+    );
+
+    halo.setAttribute('cx', (b.x + b.width / 2).toFixed(1));
+    halo.setAttribute('cy', (b.y + b.height / 2).toFixed(1));
+    halo.setAttribute('rx', (b.width * 0.66).toFixed(1));
+    halo.setAttribute('ry', (b.height * 1.15).toFixed(1));
+
+    return b;
+  }
+
+  /* ────────────────────────────── outline ─────────────────────────── */
+
+  function applyOutline() {
+    /* Write stroke width/opacity directly onto every <text> as inline
+       style. This is the reliable path: inline styles always win the
+       cascade, so the control panel always changes what you see. */
+    var w = CFG.outlineWeight;
+    var o = CFG.outlineOpacity;
+    var texts = lettersG.children;
+
+    for (var i = 0; i < texts.length; i++) {
+      texts[i].style.strokeWidth   = w.toFixed(3);
+      texts[i].style.strokeOpacity = o.toFixed(3);
+    }
+
+    /* Glow scales with stroke weight, then multiplies by the glow
+       slider. Switched off entirely when the outline is gone. */
+    var weightFactor = Math.max(0.35, Math.min(w / 2, 2));
+    var g = CFG.outlineGlow * weightFactor;
+
+    if (g <= 0.001 || w <= 0.001 || o <= 0.001) {
+      lettersG.style.filter = 'none';
+    } else {
+      lettersG.style.filter =
+        'drop-shadow(0 0 ' + (GLOW_BASE.close.blur * g).toFixed(1) + 'px ' + GLOW_BASE.close.color + ') ' +
+        'drop-shadow(0 0 ' + (GLOW_BASE.wide.blur  * g).toFixed(1) + 'px ' + GLOW_BASE.wide.color  + ')';
+    }
+  }
+
+  /* ─────────────────────── flowing colour dots ────────────────────── */
+
+  function buildDots(b) {
+    dotsG.textContent = '';
+    dots.length = 0;
+    dotEls.length = 0;
+
+    var pad = 60;
+    dotBounds = {
+      x: b.x - pad,
+      y: b.y - pad,
+      w: b.width + pad * 2,
+      h: b.height + pad * 2
+    };
+
+    var count = Math.round(CFG.dotCount);
+    var spread = CFG.hueSpread;
+
+    for (var i = 0; i < count; i++) {
+      var x = dotBounds.x + Math.random() * dotBounds.w;
+      var y = dotBounds.y + Math.random() * dotBounds.h;
+
+      var t1 = (x - b.x) / b.width;
+      var t2 = (y - b.y) / b.height;
+
+      var jitter = (Math.random() - 0.5) * 26;
+      var hue = (t1 * spread + t2 * spread * 0.22 + jitter + 720) % 360;
+
+      var sat   = 82 + Math.random() * 15;
+      var light = (55 + Math.random() * 12) * CFG.dotBright;
+      light = Math.max(8, Math.min(light, 88));
+
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 0.16 + Math.random() * 0.40;
+      var baseR = 16 + Math.random() * 26;
+
+      var dot = {
+        x: x, y: y,
+        angle: angle,
+        speed: speed,
+        baseR: baseR,
+        hue: hue,
+        sat: sat,
+        light: light
+      };
+      dots.push(dot);
+
+      var c = make('circle', {
+        cx: x.toFixed(1),
+        cy: y.toFixed(1),
+        r: (baseR * CFG.dotSize).toFixed(1),
+        fill: 'hsl(' + hue.toFixed(1) + ', ' + sat.toFixed(1) + '%, ' + light.toFixed(1) + '%)',
+        'fill-opacity': (0.55 + Math.random() * 0.28).toFixed(2)
+      });
+
+      dotsG.appendChild(c);
+      dotEls.push(c);
+    }
+
+    blurNode.setAttribute('stdDeviation', String(CFG.blur));
+  }
+
+  function applyDotSize() {
+    for (var i = 0; i < dots.length; i++) {
+      dotEls[i].setAttribute('r', (dots[i].baseR * CFG.dotSize).toFixed(1));
+    }
+  }
+
+  function animate(now) {
+    rafId = null;
+    if (!dotBounds || !CFG.animate) return;
+
+    var dt = lastTime ? Math.min((now - lastTime) / 16.667, 2.5) : 1;
+    lastTime = now;
+
+    var b = dotBounds;
+    var mult = CFG.dotSpeed;
+
+    for (var i = 0; i < dots.length; i++) {
+      var d = dots[i];
+
+      d.angle += (Math.random() - 0.5) * 0.02 * dt;
+      d.x += Math.cos(d.angle) * d.speed * mult * dt;
+      d.y += Math.sin(d.angle) * d.speed * mult * dt;
+
+      if (d.x < b.x) d.x += b.w;
+      else if (d.x > b.x + b.w) d.x -= b.w;
+      if (d.y < b.y) d.y += b.h;
+      else if (d.y > b.y + b.h) d.y -= b.h;
+
+      var el = dotEls[i];
+      el.setAttribute('cx', d.x.toFixed(1));
+      el.setAttribute('cy', d.y.toFixed(1));
+    }
+
+    rafId = requestAnimationFrame(animate);
+  }
+
+  function startAnimation() {
+    if (rafId) return;
+    if (!CFG.animate) return;
+    lastTime = 0;
+    rafId = requestAnimationFrame(animate);
+  }
+
+  function stopAnimation() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  }
+
+  /* ───────────────────────────── sparkles ──────────────────────────── */
+
+  function starPath(r) {
+    var k = r * 0.14;
+    return 'M0 ' + (-r) +
+           ' Q ' + k + ' ' + (-k) + ' ' + r + ' 0' +
+           ' Q ' + k + ' ' + k + ' 0 ' + r +
+           ' Q ' + (-k) + ' ' + k + ' ' + (-r) + ' 0' +
+           ' Q ' + (-k) + ' ' + (-k) + ' 0 ' + (-r) + ' Z';
+  }
+
+  function buildSparks() {
+    sparklesG.textContent = '';
+
+    var letters = lettersG.children;
+    var rnd = Math.random;
+    var density = CFG.sparkDensity;
+    var durScale = 1 / Math.max(CFG.sparkSpeed, 0.05);
+    var reach = CFG.sparkReach;
+
+    for (var i = 0; i < letters.length; i++) {
+      if (rnd() > density) continue;
+
+      var t = letters[i];
+      var b;
+      try { b = t.getBBox(); } catch (e) { continue; }
+      if (!b || (!b.width && !b.height)) continue;
+
+      var side = (rnd() * 4) | 0;
+      var px, py;
+      if (side === 0)      { px = b.x + rnd() * b.width;  py = b.y; }
+      else if (side === 1) { px = b.x + b.width;          py = b.y + rnd() * b.height; }
+      else if (side === 2) { px = b.x + rnd() * b.width;  py = b.y + b.height; }
+      else                 { px = b.x;                    py = b.y + rnd() * b.height; }
+
+      var cx = b.x + b.width / 2;
+      var cy = b.y + b.height / 2;
+      var dx = px - cx;
+      var dy = (py - cy) - 6;
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      dx /= len; dy /= len;
+
+      var dist = (22 + rnd() * 42) * reach;
+
+      var outer = make('g', {
+        transform: 'translate(' + px.toFixed(2) + ' ' + py.toFixed(2) + ')'
+      });
+
+      var inner = make('g', { 'class': 'spark' });
+      var r = 2.4 + rnd() * 1.9;
+
+      inner.appendChild(make('circle', {
+        r: (r * 2.9).toFixed(2),
+        fill: 'url(#glowGrad)'
+      }));
+      inner.appendChild(make('path', {
+        d: starPath(r),
+        fill: '#fff8e2'
+      }));
+
+      outer.appendChild(inner);
+      sparklesG.appendChild(outer);
+
+      inner.style.setProperty('--dx', (dx * dist).toFixed(2) + 'px');
+      inner.style.setProperty('--dy', (dy * dist).toFixed(2) + 'px');
+      inner.style.setProperty('--dur', ((3.4 + rnd() * 3.4) * durScale).toFixed(2) + 's');
+      inner.style.setProperty('--delay', (-rnd() * 8).toFixed(2) + 's');
+    }
+  }
+
+  /* ─────────────────────────── control panel ──────────────────────── */
+
+  function bindControl(id, outId, format, apply) {
+    var input = document.getElementById(id);
+    var out   = document.getElementById(outId);
+    if (!input) return;
+
+    function update() {
+      var v = parseFloat(input.value);
+      CFG[id] = v;
+      if (out) out.textContent = format(v);
+      if (apply) apply(v);
+    }
+
+    input.addEventListener('input', update);
+    update();
+  }
+
+  function scheduleRebuild(kind) {
+    if (rebuildTimer) cancelAnimationFrame(rebuildTimer);
+    rebuildTimer = requestAnimationFrame(function () {
+      rebuildTimer = null;
+      if (kind === 'dots') {
+        var b = getBounds();
+        if (b) buildDots(b);
+      } else if (kind === 'sparks') {
+        buildSparks();
+      }
+    });
+  }
+
+  function getBounds() {
+    try {
+      var b = lettersG.getBBox();
+      return (b && b.width) ? b : null;
+    } catch (e) { return null; }
+  }
+
+  function setupControls() {
+    var header = document.getElementById('controlsHeader');
+    var toggle = document.getElementById('controlsToggle');
+    var panel  = document.getElementById('controls');
+
+    function setCollapsed(collapsed) {
+      panel.classList.toggle('collapsed', collapsed);
+      toggle.textContent = collapsed ? '+' : '−';
+      toggle.setAttribute('aria-expanded', String(!collapsed));
+    }
+
+    header.addEventListener('click', function () {
+      setCollapsed(!panel.classList.contains('collapsed'));
+    });
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setCollapsed(!panel.classList.contains('collapsed'));
+    });
+
+    bindControl('outlineWeight', 'out-outlineWeight',
+      function (v) { return v.toFixed(2); },
+      function () { applyOutline(); });
+
+    bindControl('outlineGlow', 'out-outlineGlow',
+      function (v) { return v.toFixed(2) + '×'; },
+      function () { applyOutline(); });
+
+    bindControl('outlineOpacity', 'out-outlineOpacity',
+      function (v) { return v.toFixed(2); },
+      function () { applyOutline(); });
+
+    bindControl('dotCount', 'out-dotCount',
+      function (v) { return String(Math.round(v)); },
+      function () { scheduleRebuild('dots'); });
+
+    bindControl('dotSpeed', 'out-dotSpeed',
+      function (v) { return v.toFixed(2) + '×'; });
+
+    bindControl('dotSize', 'out-dotSize',
+      function (v) { return v.toFixed(2) + '×'; },
+      function () { applyDotSize(); });
+
+    bindControl('dotBright', 'out-dotBright',
+      function (v) { return v.toFixed(2) + '×'; },
+      function () { scheduleRebuild('dots'); });
+
+    bindControl('hueSpread', 'out-hueSpread',
+      function (v) { return Math.round(v) + '°'; },
+      function () { scheduleRebuild('dots'); });
+
+    bindControl('blur', 'out-blur',
+      function (v) { return String(Math.round(v)); },
+      function (v) { blurNode.setAttribute('stdDeviation', String(v)); });
+
+    bindControl('sparkDensity', 'out-sparkDensity',
+      function (v) { return v.toFixed(2); },
+      function () { scheduleRebuild('sparks'); });
+
+    bindControl('sparkSpeed', 'out-sparkSpeed',
+      function (v) { return v.toFixed(1) + '×'; },
+      function () { scheduleRebuild('sparks'); });
+
+    bindControl('sparkReach', 'out-sparkReach',
+      function (v) { return v.toFixed(1) + '×'; },
+      function () { scheduleRebuild('sparks'); });
+
+    var auroraToggle = document.getElementById('auroraToggle');
+    if (auroraToggle) {
+      auroraToggle.checked = CFG.aurora;
+      document.body.classList.toggle('aurora-on', CFG.aurora);
+      auroraToggle.addEventListener('change', function () {
+        CFG.aurora = auroraToggle.checked;
+        document.body.classList.toggle('aurora-on', CFG.aurora);
+      });
+    }
+
+    var animToggle = document.getElementById('animateToggle');
+    if (animToggle) {
+      animToggle.checked = CFG.animate;
+      animToggle.addEventListener('change', function () {
+        CFG.animate = animToggle.checked;
+        svg.classList.toggle('paused', !CFG.animate);
+        document.body.classList.toggle('paused', !CFG.animate);
+        if (CFG.animate) startAnimation();
+        else stopAnimation();
+      });
+    }
+  }
+
+  /* ──────────────────────────────── boot ───────────────────────────── */
+
+  function run() {
+    var box = null;
+
+    try {
+      buildParagraph();
+      box = fitViewBox();
+      buildDots(box);
+      buildSparks();
+      applyOutline();
+    } catch (err) {
+      if (window.console) console.warn(err);
+    }
+
+    setupControls();
+
+    svg.classList.toggle('paused', !CFG.animate);
+    document.body.classList.toggle('paused', !CFG.animate);
+    startAnimation();
+
+    requestAnimationFrame(function () {
+      svg.classList.add('ready');
+    });
+  }
+
+  function boot() {
+    var preloads = [];
+    var ready = (document.fonts && document.fonts.ready)
+      ? document.fonts.ready
+      : Promise.resolve();
+
+    if (document.fonts && document.fonts.load) {
+      try {
+        preloads.push(document.fonts.load('600 ' + FONT_SIZE + 'px Cinzel'));
+        preloads.push(document.fonts.load('500 16px Cinzel'));
+        preloads.push(document.fonts.load('italic 300 24px "Cormorant Garamond"'));
+      } catch (e) { /* ignore */ }
+    }
+
+    Promise.all(preloads.concat([ready])).then(run).catch(run);
+
+    setTimeout(function () {
+      if (!svg.classList.contains('ready')) run();
+    }, 2600);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+
+</body>
+</html>

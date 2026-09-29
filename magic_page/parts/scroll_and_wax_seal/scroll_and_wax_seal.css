@@ -6,54 +6,74 @@
   justify-content: center;
   gap: 1.4rem;
 }
-#heart-glitter { z-index: 70; }
 
+/* The scroll: black, with a soft purple glow. Narrow while rolled up, wide once open. */
 .scroll {
   position: relative;
-  width: min(86vw, 560px);
+  width: min(78vw, 540px);
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  transition: width 1.8s cubic-bezier(0.3, 0.7, 0.2, 1);
 }
+.scroll.is-open { width: min(94vw, 920px); }
 
-/* The wooden rods at the top and bottom of the scroll. */
+/* The rods at the top and bottom: black wood with a purple sheen. */
 .roller {
-  height: 22px;
-  margin: 0 -18px;
-  border-radius: 11px;
-  background: linear-gradient(#4a2c16, #b8864f 40%, #6b4222 75%, #2e1a0b);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
   position: relative;
   z-index: 1;
+  height: 52px;
+  margin: 0 -18px;
+  border-radius: 11px;
+  background: linear-gradient(#1c1128, #4d3574 40%, #23163a 75%, #07040c);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7), 0 0 18px rgba(180, 76, 255, 0.35);
 }
 
-/* The paper. While closed it has no height: only the two rods show, as if rolled up. */
+/* The paper. Rolled up, it's a thick black roll between the rods (shaded like a
+   cylinder), just a little shorter than the wax seal so the seal holds it shut. */
 .paper {
   overflow: hidden;
-  max-height: 0;
+  max-height: 44px;
+  height: 24px;
   margin: -6px 0;
-  padding: 0 clamp(18px, 5vw, 44px);
-  background:
-    radial-gradient(ellipse at center, rgba(255, 244, 214, 0.35), rgba(0, 0, 0, 0) 70%),
-    linear-gradient(90deg, #8a6c43, #d9c49a 12%, #e6d4ad 50%, #d9c49a 88%, #8a6c43);
+  padding: 0 clamp(16px, 4vw, 40px);
+  background: linear-gradient(180deg, #010003 0%, #140b20 28%, #26173a 50%, #140b20 72%, #010003 100%);
+  box-shadow: 0 0 34px rgba(180, 76, 255, 0.35), 0 0 90px rgba(123, 44, 191, 0.2);
   transition: max-height 1.8s cubic-bezier(0.3, 0.7, 0.2, 1), padding 1.8s ease;
+  outline: none;
 }
+/* Unrolled: a tall black page you can scroll through to read the letter. */
 .scroll.is-open .paper {
-  max-height: 60vh;
-  padding-top: 2.2rem;
-  padding-bottom: 2.2rem;
+  height: 76vh;                  /* a fixed size: the letter is written inside it and never makes it grow */
+  max-height: 76vh;
+  padding-top: 1.4rem;
+  padding-bottom: 1.4rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;          /* the page lets clicks pass through; the open letter catches them for scrolling */
+  touch-action: pan-y;           /* on phones, a finger scrolls the letter */
+  background: #000 radial-gradient(ellipse at center, rgba(123, 44, 191, 0.14), rgba(0, 0, 0, 0) 70%);
+  box-shadow: 0 0 40px rgba(180, 76, 255, 0.4), 0 0 120px rgba(123, 44, 191, 0.25), inset 0 0 40px rgba(123, 44, 191, 0.25);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(180, 76, 255, 0.5) transparent;
 }
+.scroll.is-open .paper::-webkit-scrollbar { width: 8px; }
+.scroll.is-open .paper::-webkit-scrollbar-thumb { background: rgba(180, 76, 255, 0.45); border-radius: 4px; }
+
+/* The letter stays hidden while the scroll is rolled up. */
+.letter { opacity: 0; transition: opacity 1.6s ease 0.6s; }
+.scroll.is-open .letter { opacity: 1; }
 
 /* ---- The wax seal ---------------------------------------------------------- */
 .wax-seal {
-  --seal-size: clamp(96px, 20vmin, 140px);
+  --seal-size: clamp(110px, 22vmin, 150px);
   position: absolute;
   left: calc(50% - var(--seal-size) / 2);   /* centred on the rolled-up scroll */
   top: calc(50% - var(--seal-size) / 2);
   width: var(--seal-size);
   height: var(--seal-size);
   z-index: 2;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 10px rgba(180, 76, 255, 0.25));
   transition: transform 1.2s cubic-bezier(0.5, 0, 0.8, 0.4), opacity 1.2s ease;
 }
 .wax-seal svg { display: block; width: 100%; height: 100%; overflow: visible; }
@@ -82,43 +102,8 @@
   opacity: 0;
 }
 
-/* ---- The message ------------------------------------------------------------- */
-.message {
-  margin: 0;
-  text-align: center;
-  font: italic clamp(1.7rem, 5.2vw, 2.9rem)/1.3 Georgia, "Palatino Linotype", serif;
-}
-
-/* Each letter glows in its own colour and slowly cycles through purples, gold, green and pink.
-   Every letter starts a little later than the one before, so the colours ripple along. */
-.glowing-letter {
-  display: inline-block;
-  opacity: 0;
-  animation:
-    letter-appears 0.6s ease forwards,
-    colour-cycle 6s linear infinite;
-  text-shadow: 0 0 4px currentColor, 0 0 14px currentColor, 0 0 1px #2b1d12;
-  -webkit-text-stroke: 0.5px rgba(43, 29, 18, 0.55);
-}
-.glowing-letter.space { width: 0.3em; }
-/* Keep each word's letters together on one line. */
-.message > span:not(.glowing-letter) { display: inline-block; white-space: nowrap; }
-
-@keyframes letter-appears {
-  from { opacity: 0; transform: translateY(0.3em) scale(0.8); }
-  to   { opacity: 1; transform: none; }
-}
-@keyframes colour-cycle {
-  0%   { color: #b44cff; }
-  20%  { color: #7b2cbf; }
-  40%  { color: #e8c15a; }
-  60%  { color: #5fd35a; }
-  80%  { color: #ff6fae; }
-  100% { color: #b44cff; }
-}
-
 .hint {
-  margin: clamp(40px, 8vmin, 64px) 0 0;   /* below the wax seal, which hangs over the rolled-up scroll */
+  margin: clamp(26px, 5vmin, 44px) 0 0;   /* below the wax seal, which overhangs the roll a little */
   color: rgba(201, 167, 255, 0.55);
   font: italic 0.95rem Georgia, serif;
   letter-spacing: 0.08em;
@@ -127,6 +112,5 @@
 .hint.is-gone { opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .paper, .wax-seal { transition-duration: 0.01s; }
-  .glowing-letter { animation: letter-appears 0.01s forwards; color: #b44cff; }
+  .scroll, .paper, .wax-seal, .letter { transition-duration: 0.01s; }
 }

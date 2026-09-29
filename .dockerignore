@@ -5,3 +5,6 @@ __pycache__
 *.pyc
 collected_static
 docs
+magenv
+.venv
+sitetesting.html

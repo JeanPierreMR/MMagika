@@ -8,12 +8,14 @@
 
   What a visitor experiences:
     1. A night sky with pulsing stars, dark corners where glowing eyes watch them,
-       and a rolled-up scroll sealed with red wax in the middle.
-    2. Moving the mouse leaves sparkles. HOLDING the click draws a red line.
-    3. Drawing a red cross or triangle casts the healing spell
-       (the story is in parts/healing_spell/healing_spell.js):
-       medical history fills the background, a golden winged ball flies in,
-       the stars become coloured crosses, and the scroll opens.
+       and a black rolled-up scroll sealed with red wax in the middle.
+       A violet enchanted clock, showing the real time, follows the mouse,
+       and a golden winged ball always flutters away from it.
+    2. Moving the mouse leaves sparkles. HOLDING the click draws a glittering green line.
+    3. Drawing a cross (lines or silhouette) or a triangle casts the healing spell
+       (the story is in parts/healing_spell/healing_spell.js): the stars become
+       coloured crosses, memories of medicine flood the screen, then settle into the
+       background, and the scroll opens to show a letter in glowing gold.
     4. A spiral opens a swirling portal; a zigzag makes a flash of light.
   Which drawing does what is decided in parts/spellbook/spellbook.js.
 {% endcomment %}
@@ -30,18 +32,18 @@
 
   {# Borrowed code, loaded before our parts because some parts use it. See magic_page/vendor/README.md. #}
   <script src="{% static 'vendor/pdollar.js' %}" nonce="{{ csp_nonce }}"></script>
-  <script src="{% static 'vendor/canvas-confetti.browser.min.js' %}" nonce="{{ csp_nonce }}"></script>
   <script src="{% static 'vendor/cursor-effects.browser.js' %}" nonce="{{ csp_nonce }}"></script>
 </head>
 <body>
-  {% include "medical_history/medical_history.html" %}          {# back: pictures of medical history (hidden until the healing spell) #}
+  {% include "medical_history/medical_history.html" %}          {# medical history pictures: back layer, plus the flood on top (both appear with the healing spell) #}
   {% include "night_sky/night_sky.html" %}                      {# the pulsing stars #}
+  {% include "enchanted_clock/enchanted_clock.html" %}          {# the violet clock that floats after the mouse #}
   {% include "watching_eyes/watching_eyes.html" %}              {# dark corners with glowing eyes and red fangs #}
   {% include "scroll_and_wax_seal/scroll_and_wax_seal.html" %}  {# the sealed scroll in the middle #}
-  {% include "golden_winged_ball/golden_winged_ball.html" %}    {# the golden winged ball (appears with the healing spell) #}
+  {% include "golden_winged_ball/golden_winged_ball.html" %}    {# the golden winged ball that flees the mouse #}
   {% include "swirling_portal/swirling_portal.html" %}          {# spiral spell #}
   {% include "lightning_flash/lightning_flash.html" %}          {# zigzag spell #}
-  {% include "wand/wand.html" %}                                {# front: sparkles and the red drawing line #}
+  {% include "wand/wand.html" %}                                {# front: sparkles and the green drawing line #}
   {% include "pixel_cat/pixel_cat.html" %}                      {# the little pixel cat that chases the mouse #}
 </body>
 </html>

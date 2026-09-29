@@ -4,3 +4,5 @@ __pycache__/
 venv/
 collected_static/
 .env
+magenv/
+*.kate-swp

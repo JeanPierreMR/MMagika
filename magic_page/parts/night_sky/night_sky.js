@@ -5,14 +5,14 @@
 //                  Most are yellow-white; about one in twelve has a colour.
 // What changes:    after the healing spell, turnStarsIntoColouredCrosses() makes
 //                  every star turn, one by one, into a small coloured cross.
-//                  The crosses are never red, so they don't read as "emergency".
+//                  The crosses are never red or pink, so none of them reads as a red cross.
 
 const sky = document.getElementById("night-sky");
 const pen = sky.getContext("2d");   // the "pen" we draw on the canvas with
 
 const STAR_WHITE = "#fff6d6";
 const OCCASIONAL_STAR_COLOURS = ["#b44cff", "#c9a7ff", "#7dff6a", "#8fd3ff", "#e8c15a"];
-const CROSS_COLOURS = ["#b44cff", "#c9a7ff", "#7b2cbf", "#7dff6a", "#4fd1c5", "#8fd3ff", "#e8c15a", "#ff9bd2"];
+const CROSS_COLOURS = ["#b44cff", "#c9a7ff", "#7b2cbf", "#7dff6a", "#4fd1c5", "#8fd3ff", "#e8c15a"];
 
 const motionIsReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -31,7 +31,7 @@ function scatterStars() {
   sky.height = window.innerHeight * pixelDensity;
   pen.setTransform(pixelDensity, 0, 0, pixelDensity, 0, 0);
 
-  const howMany = Math.min(600, Math.round((window.innerWidth * window.innerHeight) / 3000));
+  const howMany = Math.min(220, Math.round((window.innerWidth * window.innerHeight) / 8000));   // a sparse sky
   stars = [];
   for (let i = 0; i < howMany; i++) {
     const isColoured = Math.random() < 1 / 12;
@@ -49,7 +49,7 @@ function scatterStars() {
 }
 
 // Each star is a bright dot inside a bigger, faint dot: the faint one looks like a glow.
-// (Cheaper than the canvas "blur" effect, which is slow in some browsers with 600 stars.)
+// (Cheaper than the canvas "blur" effect, which is slow in some browsers with many stars.)
 function drawStarDot(star, brightness) {
   pen.fillStyle = star.colour;
   pen.globalAlpha = brightness * 0.18;

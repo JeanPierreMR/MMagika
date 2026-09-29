@@ -25,6 +25,8 @@ const MINIMUM_POINTS = 12;   // a tiny dab isn't a shape
 const OUR_SHAPES = {
   "cross": "cross",
   "cross outline": "cross",
+  "long cross": "cross",
+  "long cross outline": "cross",
   "triangle": "triangle",
   "spiral": "spiral",
   "zigzag": "zigzag",
@@ -61,10 +63,21 @@ recognizer.AddGesture("cross", [
   ...pointsAlong([[0, 50], [100, 50]], 2),
 ]);
 
-// A cross silhouette: the outline of a "+", like the red cross symbol, in one line.
+// A cross silhouette: the outline of a "+", like the cross on a pharmacy sign, in one line.
 recognizer.AddGesture("cross outline", pointsAlong([
   [35, 0], [65, 0], [65, 35], [100, 35], [100, 65], [65, 65],
   [65, 100], [35, 100], [35, 65], [0, 65], [0, 35], [35, 35], [35, 0],
+], 1));
+
+// The traditional cross (†): the crossbar sits high and the bottom arm is longer.
+// As two lines, and as its whole outline (a silhouette) drawn in one line.
+recognizer.AddGesture("long cross", [
+  ...pointsAlong([[50, 0], [50, 100]], 1),
+  ...pointsAlong([[18, 30], [82, 30]], 2),
+]);
+recognizer.AddGesture("long cross outline", pointsAlong([
+  [40, 0], [60, 0], [60, 22], [90, 22], [90, 42], [60, 42],
+  [60, 100], [40, 100], [40, 42], [10, 42], [10, 22], [40, 22], [40, 0],
 ], 1));
 
 // A spiral: three turns, starting in the middle and getting wider.

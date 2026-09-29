@@ -86,6 +86,7 @@ SECURE_CSP = {
     "script-src": [CSP.SELF, CSP.NONCE],
     "style-src": [CSP.SELF, CSP.NONCE],
     "img-src": [CSP.SELF, "data:"],         # "data:" = tiny images written inside the page itself
+    "font-src": [CSP.SELF],                 # the letter's fonts, stored on this site (magic_page/vendor/fonts)
     "connect-src": [CSP.SELF],
     "base-uri": [CSP.NONE],
     "form-action": [CSP.NONE],              # there are no forms

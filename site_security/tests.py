@@ -10,9 +10,9 @@ from django.test import SimpleTestCase, override_settings
 from site_security.security_settings import read_secret_key
 
 PAGE_PARTS = [
-    'id="medical-history"', 'id="night-sky"', 'id="watching-eyes"', 'id="scroll"',
+    'id="memory-flood"', 'id="memory-background"', 'id="night-sky"', 'id="watching-eyes"', 'id="scroll"',
     'id="golden-winged-ball"', 'id="swirling-portal"', 'id="lightning-flash"',
-    'id="red-line"', "vendor/oneko.js",
+    'id="drawing-line"', 'id="enchanted-clock"', "vendor/oneko.js",
 ]
 
 
@@ -22,6 +22,17 @@ class TheMagicPage(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         for part in PAGE_PARTS:
             self.assertContains(response, part)
+
+    def test_the_letter_is_in_the_scroll(self):
+        # The wording lives in letter.html and may change; check its structure, not its words.
+        page = self.client.get("/").content.decode()
+        self.assertIn('id="letter"', page)
+        self.assertIn('class="eyebrow"', page)
+        self.assertGreaterEqual(page.count('class="letter-paragraph'), 1)
+
+    def test_fonts_may_only_come_from_this_site(self):
+        header = self.client.get("/").headers["Content-Security-Policy"]
+        self.assertIn("font-src 'self'", header)
 
     def test_no_template_comments_leak_onto_the_page(self):
         page = self.client.get("/").content.decode()

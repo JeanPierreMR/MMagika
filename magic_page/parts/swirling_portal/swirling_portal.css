@@ -6,6 +6,9 @@
   margin: -160px 0 0 -160px;       /* so its position is its centre */
   pointer-events: none;
   animation: portal-opens-and-closes 3s ease-in-out forwards;
+  /* Translucent: "screen" blending only adds light, so the page shows through the
+     portal and its dark middle becomes a see-through hole. */
+  mix-blend-mode: screen;
 }
 
 /* A disc of purple bands that spins, with a dark hole in the middle. */
@@ -19,7 +22,8 @@
   background:
     radial-gradient(circle, #07060d 0%, #07060d 14%, rgba(7, 6, 13, 0) 42%),
     conic-gradient(#3b0a57, #b44cff, #7b2cbf, #c9a7ff, #3b0a57, #b44cff, #7b2cbf, #c9a7ff, #3b0a57);
-  box-shadow: 0 0 60px 10px rgba(180, 76, 255, 0.55);
+  box-shadow: 0 0 60px 10px rgba(180, 76, 255, 0.45);
+  opacity: 0.6;
   animation: spin 1.1s linear infinite;
 }
 .swirl.inner {
@@ -27,7 +31,7 @@
   height: 60%;
   top: 20%;
   left: 20%;
-  opacity: 0.8;
+  opacity: 0.45;
   animation-duration: 0.7s;
   animation-direction: reverse;
 }

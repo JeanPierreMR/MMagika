@@ -1,20 +1,21 @@
 // THE HEALING SPELL — the main story of the page.
 //
-// What starts it:  drawing a red cross or a red triangle (the spellbook calls castHealingSpell).
+// What starts it:  drawing a cross (lines or silhouette) or a triangle
+//                  (the spellbook calls castHealingSpell).
 // What it does, in order:
-//   1. pauses a moment, so the visitor sees their drawing turn gold
-//   2. the background becomes a slideshow of medical history, oldest first
-//   3. a golden winged ball starts flying around
-//   4. the stars turn into small coloured crosses
-//   5. the wax seal breaks and the scroll opens: "Live with all your heart"
+//   1. pauses a moment, so the visitor sees their drawing turn gold and glitter
+//   2. the stars turn into small coloured crosses
+//   3. memories of medicine flood the screen one after another, overlapping (about 12 seconds)
+//   4. the memories settle into the background, smaller, drifting in and out
+//   5. the wax seal breaks and the black scroll opens, showing the letter in gold
+//   6. the golden winged ball stops fleeing the mouse and flies freely
 // What changes:    the page, for the rest of the visit. Nothing is saved; reloading starts over.
-// If a step fails: the others still run (for example, if a picture can't load,
-//                  the slideshow simply skips it).
+// If a step fails: the others still run (for example, if a picture can't load, its turn is blank).
 
-import { turnBackgroundIntoMedicalHistory } from "../medical_history/medical_history.js";
-import { releaseGoldenWingedBall } from "../golden_winged_ball/golden_winged_ball.js";
 import { turnStarsIntoColouredCrosses } from "../night_sky/night_sky.js";
-import { openScrollWithMessage } from "../scroll_and_wax_seal/scroll_and_wax_seal.js";
+import { floodWithMemories, keepMemoriesInBackground } from "../medical_history/medical_history.js";
+import { openScrollAndShowLetter } from "../scroll_and_wax_seal/scroll_and_wax_seal.js";
+import { letBallFlyFreely } from "../golden_winged_ball/golden_winged_ball.js";
 
 let alreadyCast = false;
 
@@ -23,14 +24,12 @@ export async function castHealingSpell() {
   alreadyCast = true;
 
   await wait(1000);
-  turnBackgroundIntoMedicalHistory();
-
-  await wait(1500);
-  releaseGoldenWingedBall();
   turnStarsIntoColouredCrosses();
+  await floodWithMemories();        // waits until the flood is over
 
-  await wait(1000);
-  openScrollWithMessage("Live with all your heart");
+  keepMemoriesInBackground();
+  letBallFlyFreely();
+  await openScrollAndShowLetter();
 }
 
 function wait(milliseconds) {

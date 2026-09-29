@@ -1,61 +1,67 @@
 {% load static %}
 {% comment %}
-  MEDICAL HISTORY: the background slideshow that appears with the healing spell,
-  in the spirit of the House M.D. opening titles: old anatomy drawings and
-  discoveries drifting over each other, oldest first, ending with a heartbeat.
+  MEDICAL HISTORY: pictures from the history of medicine, oldest first, in the
+  spirit of the House M.D. opening titles. Used twice by medical_history.js:
+    1. as a FLOOD of memories on top of everything, one after another, each once, before the scroll opens;
+    2. afterwards, drifting in and out quietly in the BACKGROUND, smaller.
   All pictures are public domain; see image_credits.md in this folder.
-  Hidden until medical_history.js is told to start.
+  To add or remove a picture, add or remove a <figure> in the list below.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'medical_history/medical_history.css' %}" nonce="{{ csp_nonce }}">
 
-<div id="medical-history" class="layer" hidden>
-  <figure class="picture spot-left">
-    <img src="{% static 'medical_history/images/01_edwin_smith_papyrus_1600bc.jpg' %}" alt="The Edwin Smith Papyrus, the oldest known surgical text" loading="lazy">
+{# The list of pictures. A <template> is never shown by itself; the script copies pictures out of it. #}
+<template id="medical-pictures">
+  <figure class="memory">
+    <img src="{% static 'medical_history/images/01_edwin_smith_papyrus_1600bc.jpg' %}" alt="The Edwin Smith Papyrus, the oldest known surgical text">
     <figcaption>c. 1600 BC · the first surgical text</figcaption>
   </figure>
-  <figure class="picture spot-right">
-    <img src="{% static 'medical_history/images/02_da_vinci_heart_1510.jpg' %}" alt="Leonardo da Vinci's drawing of the heart and blood vessels" loading="lazy">
+  <figure class="memory">
+    <img src="{% static 'medical_history/images/02_da_vinci_heart_1510.jpg' %}" alt="Leonardo da Vinci's drawing of the heart and blood vessels">
     <figcaption>c. 1510 · Leonardo draws the heart</figcaption>
   </figure>
-  <figure class="picture spot-middle">
-    <img src="{% static 'medical_history/images/03_vesalius_fabrica_1543.jpg' %}" alt="A skeleton from Vesalius's anatomy book, De humani corporis fabrica" loading="lazy">
+  <figure class="memory">
+    <img src="{% static 'medical_history/images/03_vesalius_fabrica_1543.jpg' %}" alt="A skeleton from Vesalius's anatomy book, De humani corporis fabrica">
     <figcaption>1543 · Vesalius maps the body</figcaption>
   </figure>
-  <figure class="picture spot-left dark-painting">
-    <img src="{% static 'medical_history/images/04_rembrandt_anatomy_lesson_1632.jpg' %}" alt="Rembrandt's painting The Anatomy Lesson of Dr. Nicolaes Tulp" loading="lazy">
+  <figure class="memory dark-painting">
+    <img src="{% static 'medical_history/images/04_rembrandt_anatomy_lesson_1632.jpg' %}" alt="Rembrandt's painting The Anatomy Lesson of Dr. Nicolaes Tulp">
     <figcaption>1632 · the anatomy lesson</figcaption>
   </figure>
-  <figure class="picture spot-right">
-    <img src="{% static 'medical_history/images/05_hooke_microscope_1665.png' %}" alt="Robert Hooke's microscope" loading="lazy">
+  <figure class="memory">
+    <img src="{% static 'medical_history/images/05_hooke_microscope_1665.png' %}" alt="Robert Hooke's microscope">
     <figcaption>1665 · the microscope finds cells</figcaption>
   </figure>
-  <figure class="picture spot-middle">
-    <img src="{% static 'medical_history/images/06_laennec_stethoscope_1819.jpg' %}" alt="Portrait of René Laennec, inventor of the stethoscope" loading="lazy">
+  <figure class="memory">
+    <img src="{% static 'medical_history/images/06_laennec_stethoscope_1819.jpg' %}" alt="Portrait of René Laennec, inventor of the stethoscope">
     <figcaption>1819 · Laennec's stethoscope</figcaption>
   </figure>
-  <figure class="picture spot-left">
-    <img src="{% static 'medical_history/images/07_nightingale_diagram_1858.jpg' %}" alt="Florence Nightingale's diagram of the causes of death in the army" loading="lazy">
+  <figure class="memory">
+    <img src="{% static 'medical_history/images/07_nightingale_diagram_1858.jpg' %}" alt="Florence Nightingale's diagram of the causes of death in the army">
     <figcaption>1858 · Nightingale counts the cost</figcaption>
   </figure>
-  <figure class="picture spot-right">
-    <img src="{% static 'medical_history/images/08_gray_heart_1858.png' %}" alt="Drawing of the inside of the heart from Gray's Anatomy" loading="lazy">
+  <figure class="memory">
+    <img src="{% static 'medical_history/images/08_gray_heart_1858.png' %}" alt="Drawing of the inside of the heart from Gray's Anatomy">
     <figcaption>1858 · Gray's Anatomy</figcaption>
   </figure>
-  <figure class="picture spot-middle">
-    <img src="{% static 'medical_history/images/09_rontgen_first_xray_1895.jpg' %}" alt="Röntgen's first X-ray: his wife's hand, wearing a ring" loading="lazy">
+  <figure class="memory">
+    <img src="{% static 'medical_history/images/09_rontgen_first_xray_1895.jpg' %}" alt="Röntgen's first X-ray: his wife's hand, wearing a ring">
     <figcaption>1895 · the first X-ray</figcaption>
   </figure>
-  <figure class="picture spot-middle heartbeat">
+  <figure class="memory heartbeat">
     {# Today: a heartbeat line, drawn by us. #}
     <svg viewBox="0 0 400 120" aria-label="A heartbeat line">
       <polyline points="0,60 110,60 130,60 142,40 154,60 170,60 182,8 196,112 210,60 232,60 246,48 262,60 400,60"/>
     </svg>
     <figcaption>today · every heartbeat</figcaption>
   </figure>
+</template>
 
-  {# A purple wash over everything, so the pictures feel like one dream. #}
+{# 1. The flood: on top of everything, while the spell is being cast. #}
+<div id="memory-flood" class="layer" aria-hidden="true"></div>
+
+{# 2. The background: behind everything, once the scroll is open. #}
+<div id="memory-background" class="layer" hidden>
   <div class="purple-wash"></div>
-
   <p class="picture-credits">
     Pictures: public domain, from <a href="https://commons.wikimedia.org/" rel="noopener">Wikimedia Commons</a>
   </p>

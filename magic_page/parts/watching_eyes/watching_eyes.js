@@ -1,14 +1,14 @@
 // WATCHING EYES
 //
 // What starts it:  the page loading.
-// What it does:    keeps 4 pairs of eyes going. Each pair, again and again:
-//                  appears somewhere in a dark corner, opens its eyes, watches the
-//                  mouse for a few seconds (blinking now and then), closes and fades,
-//                  waits a moment, then appears somewhere else.
+// What it does:    keeps 2 pairs of eyes going. Each pair, again and again:
+//                  slowly appears somewhere in a dark corner, opens its eyes, watches the
+//                  mouse for a while (blinking slowly now and then), closes and fades,
+//                  waits in the dark, then appears somewhere else. Mysterious, not busy.
 // What it uses:    the "pair-of-eyes" template in watching_eyes.html, and the mouse position.
 // What changes:    only what's on screen; nothing is saved.
 
-const NUMBER_OF_WATCHERS = 4;
+const NUMBER_OF_WATCHERS = 2;
 const HOW_FAR_PUPILS_MOVE_SIDEWAYS = 6;   // in the drawing's own units (an eye is 44 units wide)
 const HOW_FAR_PUPILS_MOVE_UP_DOWN = 2;
 
@@ -82,29 +82,30 @@ function lookAtMouse(watcher) {
   });
 }
 
+// A slow, lazy blink: the lids take half a second to close, rest shut, then open again.
 async function blink(watcher) {
   watcher.element.classList.add("is-blinking");
-  await wait(140);
+  await wait(750);
   watcher.element.classList.remove("is-blinking");
 }
 
 // One watcher's endless routine: appear, watch, blink, disappear, move.
 async function keepWatching(watcher) {
-  await wait(randomBetween(0, 5000));             // start at different times
+  await wait(randomBetween(1500, 9000));          // start at different times
   while (true) {
     moveToRandomDarkCorner(watcher);
     lookAtMouse(watcher);
-    watcher.element.classList.add("is-awake");     // fades in, then the eyes open (see the CSS)
-    await wait(1200);
+    watcher.element.classList.add("is-awake");     // fades in slowly, then the eyes open (see the CSS)
+    await wait(3000);
 
-    const watchUntil = Date.now() + randomBetween(4000, 8000);
+    const watchUntil = Date.now() + randomBetween(6000, 11000);
     while (Date.now() < watchUntil) {
-      await wait(randomBetween(1500, 3500));
+      await wait(randomBetween(3500, 7000));
       await blink(watcher);
     }
 
     watcher.element.classList.remove("is-awake");  // eyes close and fade away
-    await wait(randomBetween(1500, 4000));
+    await wait(randomBetween(5000, 12000));        // a long, dark wait before appearing again
   }
 }
 

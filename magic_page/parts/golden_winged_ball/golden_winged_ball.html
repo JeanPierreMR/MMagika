@@ -1,11 +1,12 @@
 {% load static %}
 {% comment %}
-  THE GOLDEN WINGED BALL: a small golden ball with fluttering wings that flies
-  around the screen once the healing spell has been cast. Drawn by us.
+  THE GOLDEN WINGED BALL: a small golden ball with fluttering wings. It is always
+  there, darting away from the mouse; once the scroll opens it flies freely around
+  the screen. Drawn by us.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'golden_winged_ball/golden_winged_ball.css' %}" nonce="{{ csp_nonce }}">
 
-<div id="golden-winged-ball" hidden aria-hidden="true">
+<div id="golden-winged-ball" aria-hidden="true">
   {# A few fading copies that follow behind it, like a shimmer in the air. #}
   <div class="shimmer"></div><div class="shimmer"></div><div class="shimmer"></div><div class="shimmer"></div>
 

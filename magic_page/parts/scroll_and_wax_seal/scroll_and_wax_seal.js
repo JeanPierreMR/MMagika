@@ -1,17 +1,17 @@
 // THE SCROLL AND WAX SEAL
 //
 // What starts it:  the page loading draws the wax seal's melted edge.
-//                  The healing spell calls openScrollWithMessage("Live with all your heart").
+//                  The healing spell calls openScrollAndShowLetter().
 // What it does when opened:
 //   1. a crack runs across the seal
-//   2. the seal falls away and the scroll unrolls
-//   3. the message appears letter by letter, each letter glowing and changing colour
-//   4. small hearts keep glittering out of the word "heart" (using the borrowed
-//      canvas-confetti library)
+//   2. the seal falls away and the black scroll unrolls
+//   3. once fully unrolled, the letter (letter.html) writes itself in glowing gold (letter_in_gold.js)
 // What changes:    only what's on screen.
 
+import { writeLetterInGold } from "./letter_in_gold.js";
+
 const scroll = document.getElementById("scroll");
-const messageSpot = document.getElementById("scroll-message");
+const paper = scroll.querySelector(".paper");
 const hint = document.getElementById("scroll-hint");
 
 // ---- The melted edge of the wax -------------------------------------------------
@@ -39,7 +39,7 @@ function drawMeltedWaxEdge() {
 }
 
 // ---- Opening the scroll ------------------------------------------------------------
-export async function openScrollWithMessage(message) {
+export async function openScrollAndShowLetter() {
   if (scroll.classList.contains("is-open")) return;
   hint.classList.add("is-gone");
 
@@ -47,78 +47,9 @@ export async function openScrollWithMessage(message) {
   await wait(600);
   scroll.classList.add("is-open");         // the seal falls, the paper unrolls (see the CSS)
   scroll.classList.remove("is-closed");
-  await wait(900);
-
-  writeGlowingLetters(message);
-  await wait(message.length * 90 + 600);    // until the last letter has appeared
-  startHeartGlitter();
-}
-
-// Put each letter in its own little box so each one can glow and change colour on its own.
-// The word "heart" is also wrapped as a whole, so we know where the hearts should come from.
-function writeGlowingLetters(message) {
-  messageSpot.textContent = "";
-  messageSpot.setAttribute("aria-label", message);   // screen readers read the whole sentence at once
-  let letterNumber = 0;
-
-  for (const word of message.split(" ")) {
-    const wordBox = document.createElement("span");
-    if (word.toLowerCase() === "heart") wordBox.id = "word-heart";
-    for (const letter of word) {
-      wordBox.appendChild(makeGlowingLetter(letter, letterNumber++));
-    }
-    messageSpot.appendChild(wordBox);
-    messageSpot.appendChild(makeGlowingLetter(" ", letterNumber++));
-  }
-}
-
-function makeGlowingLetter(letter, letterNumber) {
-  const box = document.createElement("span");
-  box.className = letter === " " ? "glowing-letter space" : "glowing-letter";
-  box.textContent = letter;
-  box.setAttribute("aria-hidden", "true");
-  // Letter 0 appears first, then each one 90 ms later; the colour ripple is offset the same way.
-  box.style.animationDelay = `${letterNumber * 0.09}s, ${letterNumber * -0.25}s`;
-  return box;
-}
-
-// ---- Hearts glittering out of the word "heart" ----------------------------------------
-// canvas-confetti (borrowed) throws little shapes that fly and fall. We give it our own
-// canvas, and ask it not to use a separate background helper ("worker"), which this
-// site's security rules would block.
-function startHeartGlitter() {
-  const word = document.getElementById("word-heart");
-  if (!word) return;
-  const throwConfetti = confetti.create(document.getElementById("heart-glitter"), { resize: true, useWorker: false });
-
-  let heartShape;
-  try {
-    // An SVG path drawing of a heart.
-    heartShape = confetti.shapeFromPath({ path: "M167 72c19,-38 37,-56 75,-56 42,0 76,33 76,75 0,76 -76,151 -151,227 -76,-76 -151,-151 -151,-227 0,-42 33,-75 75,-75 38,0 57,18 76,56z" });
-  } catch {
-    heartShape = "circle";   // very old browsers can't make shapes from paths; round glitter instead
-  }
-
-  setInterval(() => {
-    const box = word.getBoundingClientRect();
-    throwConfetti({
-      particleCount: 3,
-      angle: 90,                     // straight up...
-      spread: 70,                    // ...fanning out a little to each side
-      startVelocity: 22,
-      gravity: 0.45,
-      drift: (Math.random() - 0.5) * 0.8,
-      ticks: 160,                    // how long each heart lives
-      scalar: 0.85,                  // size
-      shapes: [heartShape],
-      colors: ["#ff6fae", "#ff9bd2", "#c9a7ff", "#b44cff", "#e8c15a"],
-      origin: {                      // the top of the word, as a fraction of the screen
-        x: (box.left + Math.random() * box.width) / window.innerWidth,
-        y: box.top / window.innerHeight,
-      },
-      disableForReducedMotion: true,
-    });
-  }, 350);
+  await wait(1800);                        // let it finish unrolling (1.8 s in the CSS), so the letter is laid out at full width
+  await writeLetterInGold(paper);
+  paper.focus({ preventScroll: true });    // so the keyboard's arrow keys scroll the letter
 }
 
 function wait(milliseconds) {

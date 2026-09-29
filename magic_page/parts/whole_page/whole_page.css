@@ -45,9 +45,9 @@ body {
 
 /*
   Stacking order, back to front (higher number = closer to you):
-     0  medical_history      10 night_sky          20 watching_eyes
-    30  scroll_and_wax_seal  40 golden_winged_ball 50 swirling_portal
-    55  lightning_flash      60 wand (sparkles + red line)   70 heart glitter
+     0  medical_history      10 night_sky          15 enchanted_clock    20 watching_eyes
+    30  scroll_and_wax_seal  40 golden_winged_ball 45 memory flood       50 swirling_portal
+    55  lightning_flash      60 wand (sparkles + green line)
 */
 
 /* Text only for screen readers (people who listen to the page instead of seeing it). */
