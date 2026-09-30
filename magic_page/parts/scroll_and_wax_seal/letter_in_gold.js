@@ -1,11 +1,15 @@
 // THE LETTER IN GOLD — the lettering effect from decree.html.
 //
-// What starts it:  the scroll calls writeLetterInGold() when it opens.
+// What starts it:  the scroll calls prepareLetter() soon after the page loads (builds it, invisible)
+//                  and writeLetterInGold() once it has fully opened (starts the writing).
 // What it uses:    the paragraphs in letter.html (class "letter-paragraph").
 // What it does:    for each paragraph, builds a drawing (SVG) with three layers:
 //   1. GOLD: every letter in bold gothic gold.
 //   2. COLOUR: soft blurred dots of rainbow colour drifting slowly, visible only
-//      inside the letters (a "mask" cuts them to the letter shapes).
+//      inside the letters (a "mask" cuts them to the letter shapes). The drifting dots are a
+//      ready-made looping animation (colour_field.webp, 36 seconds), so the browser only plays
+//      it back instead of computing and blurring hundreds of dots. It's made with
+//      tools/colour_field/ from the same settings decree.html uses.
 //   3. SPARKS: little four-pointed stars that fly off about a third of the letters.
 //   Lines are justified like a printed page; the last line of a paragraph is centred.
 //   Then the letter WRITES ITSELF, as in decree.html: letter by letter, line by line, each
@@ -13,7 +17,6 @@
 //   A paragraph's sparks wake up once it is finished. The scroll follows the writing down,
 //   until the reader scrolls by themselves.
 // What changes:    only what's on screen. The original paragraph stays (invisible) for screen readers.
-// To save work, a paragraph's colours only move while it is visible in the scroll.
 
 const SVG = "http://www.w3.org/2000/svg";
 
@@ -32,27 +35,15 @@ const DRAW_TIME = 2.0;               // how long one letter takes to trace and f
 const LETTER_GAP = 0.035;            // delay between one letter and the next
 const LINE_PAUSE = 0.25;             // extra pause before each new line
 
-// The colour field: the default values of decree.html's control panel.
-const COLOUR_DOTS = 220;             // for a decree-sized block of text (see dotsFor below)
-const DOT_SPEED = 1;
-const DOT_SIZE = 1;
-const DOT_BRIGHTNESS = 1;
-const RAINBOW_SPREAD = 340;          // degrees of colour wheel across the text
-const SOFTNESS = 14;                 // how blurred the dots are
-
-// decree.html spread its 220 dots over about 1160 × 350 units of text, shown about 0.84× size.
-// Our paragraphs are taller and shown smaller, so we keep what you SEE the same: the same number
-// of dots per patch of screen. (Keeping 220 dots per paragraph's units would mean about three
-// times as many dots on screen, which made the letter stutter.)
-const DECREE_TEXT_AREA = 1160 * 350;
-const DECREE_SHOWN_SIZE = 0.84;
-function dotsFor(area, shownSize) {
-  const areaOnScreenComparedToDecree = (area * shownSize * shownSize) / (DECREE_TEXT_AREA * DECREE_SHOWN_SIZE * DECREE_SHOWN_SIZE);
-  return Math.max(40, Math.min(600, Math.round(COLOUR_DOTS * areaOnScreenComparedToDecree)));
-}
+// The colour animation: one tile, 1160 × 520 drawing units, that wraps top to bottom, so tiles
+// can be stacked under a paragraph of any length. Its sides line up with the text's.
+const COLOUR_FIELD = new URL("./colour_field.webp", import.meta.url).href;
+const COLOUR_TILE_WIDTH = 1160;
+const COLOUR_TILE_HEIGHT = 520;
+const COLOUR_ROOM = 60;              // how far the colours reach beyond the text
 
 const motionIsReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const paragraphs = [];               // one entry per drawn paragraph: its dots and whether it's on screen
+const paragraphs = [];               // every drawn paragraph
 const writingOrder = [];             // every gold letter with the second it starts being written
 let lettersSoFar = 0;                // counts letters and lines across the whole letter,
 let linesSoFar = 0;                  // so the writing flows on from one paragraph to the next
@@ -79,7 +70,6 @@ function drawParagraph(source, number) {
   const svg = make("svg", { class: "decree-svg", "aria-hidden": "true", focusable: "false", viewBox: "0 0 1200 520" });
   // Each drawing needs its own names for its mask and blur, or they would clash.
   const maskId = `letter-mask-${number}`;
-  const blurId = `letter-blur-${number}`;
   const glowId = `spark-glow-${number}`;
   svg.innerHTML = `
     <defs>
@@ -88,15 +78,12 @@ function drawParagraph(source, number) {
         <stop offset="55%" stop-color="#ffd98a" stop-opacity="0.22"/>
         <stop offset="100%" stop-color="#ffd98a" stop-opacity="0"/>
       </radialGradient>
-      <filter id="${blurId}" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
-        <feGaussianBlur stdDeviation="${SOFTNESS}"/>
-      </filter>
       <mask id="${maskId}" maskUnits="userSpaceOnUse" x="-2000" y="-2000" width="8000" height="8000">
         <g class="mask-letters" fill="#fff"></g>
       </mask>
     </defs>
     <g class="gold-letters"></g>
-    <g mask="url(#${maskId})"><g class="colour-dots" filter="url(#${blurId})"></g></g>
+    <g mask="url(#${maskId})"><g class="colour-field"></g></g>
     <g class="shape-letters"></g>
     <g class="sparks"></g>`;
   source.after(svg);
@@ -134,8 +121,8 @@ function drawParagraph(source, number) {
     box.width + ROOM_AROUND_SIDES * 2, box.height + ROOM_ABOVE_AND_BELOW * 2,
   ].map((n) => n.toFixed(1)).join(" "));
 
-  const paragraph = { svg, dots: [], bounds: null, visible: false };
-  addColourDots(paragraph, svg.querySelector(".colour-dots"), box);
+  const paragraph = { svg };
+  addColourField(svg.querySelector(".colour-field"), box);
   addSparks(svg.querySelector(".sparks"), shapeLetters, glowId);
   paragraphs.push(paragraph);
   return paragraph;
@@ -182,56 +169,19 @@ function layOutLines(svg, text, placeLetter) {
 }
 
 // ---- The colour field ---------------------------------------------------------------------
-function addColourDots(paragraph, group, box) {
-  const padding = 60;
-  const bounds = { x: box.x - padding, y: box.y - padding, w: box.width + padding * 2, h: box.height + padding * 2 };
-  paragraph.bounds = bounds;
-
-  const shownSize = paragraph.svg.getBoundingClientRect().width / (box.width + ROOM_AROUND_SIDES * 2);
-  const count = dotsFor(bounds.w * bounds.h, shownSize || DECREE_SHOWN_SIZE);
-  for (let i = 0; i < count; i++) {
-    const x = bounds.x + Math.random() * bounds.w;
-    const y = bounds.y + Math.random() * bounds.h;
-    // The colour depends on where the dot starts, so colours sweep across the text like a rainbow.
-    const across = (x - box.x) / box.width;
-    const down = (y - box.y) / box.height;
-    const hue = (across * RAINBOW_SPREAD + down * RAINBOW_SPREAD * 0.22 + (Math.random() - 0.5) * 26 + 720) % 360;
-    const saturation = 82 + Math.random() * 15;
-    const lightness = Math.max(8, Math.min(88, (55 + Math.random() * 12) * DOT_BRIGHTNESS));
-    const radius = 16 + Math.random() * 26;
-
-    const circle = make("circle", {
-      cx: x.toFixed(1), cy: y.toFixed(1), r: (radius * DOT_SIZE).toFixed(1),
-      fill: `hsl(${hue.toFixed(1)}, ${saturation.toFixed(1)}%, ${lightness.toFixed(1)}%)`,
-      "fill-opacity": (0.55 + Math.random() * 0.28).toFixed(2),
-    });
-    group.appendChild(circle);
-    paragraph.dots.push({ x, y, angle: Math.random() * Math.PI * 2, speed: 0.16 + Math.random() * 0.4, circle });
+// Stack copies of the colour animation under the paragraph, from a little above the text to a
+// little below. All copies are the same picture, so the browser decodes it only once.
+function addColourField(group, box) {
+  const left = box.x + box.width / 2 - COLOUR_TILE_WIDTH / 2;
+  const bottom = box.y + box.height + COLOUR_ROOM;
+  for (let top = box.y - COLOUR_ROOM; top < bottom; top += COLOUR_TILE_HEIGHT) {
+    group.appendChild(make("image", {
+      href: COLOUR_FIELD,
+      x: left.toFixed(1), y: top.toFixed(1),
+      width: COLOUR_TILE_WIDTH, height: COLOUR_TILE_HEIGHT + 0.5,   // a hair of overlap: no seam
+      preserveAspectRatio: "none",
+    }));
   }
-}
-
-// Each dot wanders: it keeps a heading that turns a tiny random amount each step.
-// A dot leaving one side of the text comes back in on the other side.
-// The dots drift slowly, so moving them 30 times a second looks the same as 60 and costs half.
-let lastMove = 0;
-function moveColourDots(now) {
-  if (now - lastMove < 33) { requestAnimationFrame(moveColourDots); return; }
-  const steps = lastMove ? Math.min((now - lastMove) / 16.667, 5) : 1;   // 1 step = one 60 Hz frame
-  lastMove = now;
-  for (const paragraph of paragraphs) {
-    if (!paragraph.visible) continue;
-    const b = paragraph.bounds;
-    for (const dot of paragraph.dots) {
-      dot.angle += (Math.random() - 0.5) * 0.02 * steps;
-      dot.x += Math.cos(dot.angle) * dot.speed * DOT_SPEED * steps;
-      dot.y += Math.sin(dot.angle) * dot.speed * DOT_SPEED * steps;
-      if (dot.x < b.x) dot.x += b.w; else if (dot.x > b.x + b.w) dot.x -= b.w;
-      if (dot.y < b.y) dot.y += b.h; else if (dot.y > b.y + b.h) dot.y -= b.h;
-      dot.circle.setAttribute("cx", dot.x.toFixed(1));
-      dot.circle.setAttribute("cy", dot.y.toFixed(1));
-    }
-  }
-  requestAnimationFrame(moveColourDots);
 }
 
 // ---- Sparks ---------------------------------------------------------------------------------
@@ -275,42 +225,39 @@ function addSparks(group, letters, glowId) {
 }
 
 // ---- Writing the letter -------------------------------------------------------------------------
-// Waits for the gothic font (up to 2.6 s, as decree.html does), then draws every paragraph.
-export async function writeLetterInGold(scrollingArea) {
-  if (alreadyWritten) return;
-  alreadyWritten = true;
-  try {
-    await Promise.race([
-      Promise.all([
-        document.fonts.load(`${FONT_WEIGHT} ${FONT_SIZE}px "Grenze Gotisch"`),
-        document.fonts.load("500 16px Cinzel"),
-        document.fonts.load('italic 300 24px "Cormorant Garamond"'),
-      ]),
-      new Promise((resolve) => setTimeout(resolve, 2600)),
-    ]);
-  } catch {
-    // If the fonts can't load, the letter is still written in Georgia.
-  }
+// Two steps, so the writing never pushes anything around:
+//   1. prepareLetter(): soon after the page loads, while the scroll is still rolled up, every
+//      paragraph is built at its final size, invisible. The letter already takes its full room.
+//   2. writeLetterInGold(): once the scroll is fully open, the letters start writing themselves.
+let preparing = null;
+export function prepareLetter(scrollingArea) {
+  if (!preparing) preparing = buildEveryParagraph(scrollingArea);
+  return preparing;
+}
+
+async function buildEveryParagraph(scrollingArea) {
+  // Wait for the gothic font (up to 2.6 s, as decree.html does); without it the letters would be
+  // measured in the wrong font. If it can't load, the letter is still written in Georgia.
+  const fonts = Promise.all([
+    document.fonts.load(`${FONT_WEIGHT} ${FONT_SIZE}px "Grenze Gotisch"`),
+    document.fonts.load("500 16px Cinzel"),
+    document.fonts.load('italic 300 24px "Cormorant Garamond"'),
+  ]).catch(() => {});
+  await Promise.race([fonts, new Promise((resolve) => setTimeout(resolve, 2600))]);
 
   const sources = [...document.querySelectorAll(".letter-paragraph")];
   sources.forEach((source, index) => drawParagraph(source, index + 1));
+}
 
-  // Only move a paragraph's colours while it is visible in the scroll.
-  const watcher = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      const paragraph = paragraphs.find((p) => p.svg === entry.target);
-      if (paragraph) paragraph.visible = entry.isIntersecting;
-    }
-  }, { root: scrollingArea });
-  paragraphs.forEach((paragraph) => watcher.observe(paragraph.svg));
-
-  // Everything is laid out at its final size before any letter shows, so nothing moves or grows.
+export async function writeLetterInGold(scrollingArea) {
+  if (alreadyWritten) return;
+  alreadyWritten = true;
+  await prepareLetter(scrollingArea);
   // Two frames later (so the browser has settled), the writing begins.
   requestAnimationFrame(() => requestAnimationFrame(() => {
     paragraphs.forEach((paragraph) => paragraph.svg.classList.add("ready", "is-writing"));
     followTheWriting(scrollingArea);
   }));
-  if (!motionIsReduced) requestAnimationFrame(moveColourDots);
 }
 
 // ---- The scroll follows the pen ------------------------------------------------------------------

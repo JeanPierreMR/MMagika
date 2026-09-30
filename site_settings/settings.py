@@ -20,6 +20,10 @@ from site_security.security_settings import *  # noqa: E402,F403
 # There are no user accounts, no database and no forms, so we leave out
 # everything Django normally adds for those.
 INSTALLED_APPS = [
+    # On your computer, let WhiteNoise hand out the files instead of Django's own test server.
+    # WhiteNoise tells the browser to check for a newer copy every time, so after a change
+    # you never get new HTML with an old, cached CSS or JavaScript file.
+    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",   # hands out pictures, styles and scripts
     "site_security",
     "magic_page",

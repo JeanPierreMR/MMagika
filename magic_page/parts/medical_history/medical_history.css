@@ -46,9 +46,10 @@
 
 /* Each memory appears at once (no fade-in), then slowly fades away while drifting closer,
    as if rushing past. --tilt is set by the script, a little different for each picture. */
-.flood-memory { animation: memory-rushes-past 5.5s ease-in forwards; }
+.flood-memory { animation: memory-rushes-past 2.5s ease-in-out forwards; }
 @keyframes memory-rushes-past {
-  0%   { opacity: 0.5;  transform: scale(0.9) rotate(var(--tilt)); }
+  0%   { opacity: 0;  transform: scale(0.9) rotate(var(--tilt)); }
+  20%   { opacity: 0.5;  transform: scale(0.9) rotate(var(--tilt)); }
   100% { opacity: 0;    transform: scale(1.12) rotate(var(--tilt)); }
 }
 

@@ -16,9 +16,9 @@
 
 // The pauses before each picture arrives, in milliseconds. Uneven on purpose, so it feels
 // like memories surfacing on their own. Used in turn, then again from the start.
-const FLOOD_PAUSES = [1100, 700, 1500, 900, 1300, 600, 1400, 1000, 800, 1200];
+const FLOOD_PAUSES = [600, 300, 700, 500, 300, 300, 500, 300, 200, 600];
 const BACKGROUND_PAUSES = [2900, 2100, 3400, 2500, 3100, 2300, 3700, 2700];
-const FLOOD_PICTURE_LIFE = 5500;        // matches "memory-rushes-past" in the CSS
+const FLOOD_PICTURE_LIFE = 2400;        // matches "memory-rushes-past" in the CSS
 const BACKGROUND_PICTURE_LIFE = 9000;   // matches "memory-comes-and-goes" in the CSS
 
 // Tilts in degrees, used in turn.
@@ -85,7 +85,7 @@ export async function floodWithMemories() {
     showPicture(turn, turn, floodLayer, "flood-memory", 26, 44, FLOOD_PICTURE_LIFE);
     await wait(FLOOD_PAUSES[turn % FLOOD_PAUSES.length]);
   }
-  await wait(1500);   // let the last one fade a little before the scroll opens
+  await wait(1000);   // let the last one fade a little before the scroll opens
 }
 
 export function keepMemoriesInBackground() {

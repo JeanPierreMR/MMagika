@@ -1,12 +1,12 @@
 # MMagika
 
-A sparse night sky of pulsing stars. Two pairs of glowing purple-green eyes appear now and then in the dark corners, with a faint glint of red fangs beneath. In the middle sits a black scroll with a soft purple glow, sealed with dark red wax stamped **MD** in gold. A golden winged ball flutters about, always keeping away from your mouse.
+A sparse night sky of pulsing stars. A single pair of glowing purple-green eyes appears now and then in the dark corners, with a faint glint of red fangs beneath. In the middle lies a dark rolled-up scroll with a soft purple glow, tied with ribbons and sealed with dark red wax stamped **MD** in gold. A golden winged ball flutters about, always keeping away from your mouse.
 
 Move the mouse and sparkles follow it. **Hold the click** and you draw a glowing, glittering green line. Draw the right shape and something happens:
 
 | Draw (holding the click) | What happens |
 |---|---|
-| **A cross** (a `+` or a `†`, as two lines or as a whole silhouette) or **a triangle** | **The healing spell.** The stars turn into coloured crosses. Memories of medicine flood the screen one after another, each shown once, oldest first (House M.D.-opening style), then settle into the background, smaller, drifting in and out. The seal cracks, the scroll unrolls, and the letter appears in glowing gothic gold with colours flowing through it and sparks flying off (the effect from `decree.html`). The golden ball stops fleeing and flies freely. |
+| **A cross** (a `+` or a `†`, as two lines or as a whole silhouette) or **a triangle** | **The healing spell.** The stars turn into coloured crosses. Memories of medicine flood the screen one after another, each shown once, oldest first (House M.D.-opening style), then settle into the background, smaller, drifting in and out. The seal glows and bursts into flying wax and embers, the sheet unrolls out of the roll, and once it is fully open the letter writes itself in glowing gothic gold with colours flowing through it and sparks flying off (the effect from `decree.html`). The golden ball stops fleeing and flies freely. |
 | **A spiral** | A translucent swirling purple portal opens where you drew it. |
 | **A zigzag** (or a lightning bolt) | The screen flashes and jolts. |
 
@@ -31,7 +31,7 @@ Each JavaScript file starts by answering: *What starts it? What does it use? Wha
 | `whole_page/` | Colours (several purples) and basic layout shared by everything |
 | `night_sky/` | The pulsing stars; later turns them into coloured crosses |
 | `enchanted_clock/` | The violet clock that follows the mouse (ported from Arcane Hours, "teleport" version) |
-| `watching_eyes/` | Dark corners, and two pairs of eyes that slowly appear, follow the mouse, blink lazily and vanish |
+| `watching_eyes/` | Dark corners, and one pair of eyes that slowly appears, follows the mouse, blinks lazily and vanishes |
 | `wand/` | Sparkles, plus the glittering green line while you hold the click (it stays until 1 second after you let go) |
 | `spellbook/` | Reads what shape you drew (`shape_reader.js`) and casts the matching spell |
 | `healing_spell/` | The main story, in order |

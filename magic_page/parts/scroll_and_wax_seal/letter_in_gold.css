@@ -12,14 +12,6 @@
   font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* The letter floats gently up and down (decree.html's "cardFloat"). */
-  animation: letter-floats 7s ease-in-out infinite;
-  will-change: transform;
-}
-/* rotate(0.01deg) stops the browser snapping text to whole pixels, so the float glides. */
-@keyframes letter-floats {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(0.01deg); }
-  50%      { transform: translate3d(0, -14px, 0) rotate(0.01deg); }
 }
 
 .eyebrow {
@@ -80,7 +72,7 @@
 /* The invisible copy used only for measuring and placing sparks. */
 .shape-letters text { fill: none; stroke: none; }
 /* "screen" blending: the colours light up the gold instead of covering it. */
-.colour-dots { mix-blend-mode: screen; }
+.colour-field { mix-blend-mode: screen; }
 
 .spark {
   opacity: 0;
@@ -141,7 +133,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .letter { animation: none; }
   .is-writing .gold-letters text, .is-writing .mask-letters text { animation-duration: 0.01s; animation-delay: 0s; }
   .is-writing .sparks { transition-delay: 0s; }
   .spark { animation: none; opacity: 0.55; transform: translate(calc(var(--dx) * 0.35), calc(var(--dy) * 0.35)) scale(0.7); }

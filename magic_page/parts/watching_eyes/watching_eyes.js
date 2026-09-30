@@ -1,14 +1,14 @@
 // WATCHING EYES
 //
 // What starts it:  the page loading.
-// What it does:    keeps 2 pairs of eyes going. Each pair, again and again:
+// What it does:    keeps 1 pair of eyes going. Again and again, it:
 //                  slowly appears somewhere in a dark corner, opens its eyes, watches the
 //                  mouse for a while (blinking slowly now and then), closes and fades,
 //                  waits in the dark, then appears somewhere else. Mysterious, not busy.
 // What it uses:    the "pair-of-eyes" template in watching_eyes.html, and the mouse position.
 // What changes:    only what's on screen; nothing is saved.
 
-const NUMBER_OF_WATCHERS = 2;
+const NUMBER_OF_WATCHERS = 1;
 const HOW_FAR_PUPILS_MOVE_SIDEWAYS = 6;   // in the drawing's own units (an eye is 44 units wide)
 const HOW_FAR_PUPILS_MOVE_UP_DOWN = 2;
 
