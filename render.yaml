@@ -10,6 +10,8 @@ services:
     envVars:
       - key: DJANGO_SECRET_KEY  # Render makes a long random secret for us
         generateValue: true
+      - key: VAULT_COMBINATION  # the vault's combination: Render asks you for it when you create the site
+        sync: false
       # Using your own domain? Add it here, comma separated:
       # - key: DJANGO_ALLOWED_HOSTS
       #   value: mmagika.com,www.mmagika.com

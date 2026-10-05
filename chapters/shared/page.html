@@ -1,0 +1,31 @@
+{% load static %}<!doctype html>
+{% comment %}
+  THE PAGE FRAME every chapter is built on. A chapter's page (e.g. vault/vault.html) starts with
+  {% extends "shared/page.html" %} and fills in the blocks below:
+    title    the browser tab's title
+    head     the chapter's own styles (and anything else for <head>)
+    body     what's on screen, and the chapter's scripts
+  Shared colours, layout and the page-to-page transition live in whole_page.css.
+{% endcomment %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}The Dreamers{% endblock %}</title>
+  <meta name="description" content="A sealed vault, a signal, and a letter for the Dreamers.">
+  <meta name="theme-color" content="#050407">
+  {# The page's secret token: chapters send it back with their messages (see shared/tell_the_site.js). #}
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23110a06'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23e6c87e' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{% static 'shared/fonts.css' %}" nonce="{{ csp_nonce }}">
+  <link rel="stylesheet" href="{% static 'shared/whole_page.css' %}" nonce="{{ csp_nonce }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% block body %}{% endblock %}
+  {% if profiling %}{# only with ?profile on your own computer: measures what makes the page slow #}
+  <link rel="stylesheet" href="{% static 'shared/profiler/profiler.css' %}" nonce="{{ csp_nonce }}">
+  <script type="module" src="{% static 'shared/profiler/profiler.js' %}" nonce="{{ csp_nonce }}"></script>
+  {% endif %}
+</body>
+</html>

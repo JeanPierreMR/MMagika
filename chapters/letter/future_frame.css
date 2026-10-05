@@ -1,0 +1,51 @@
+/* THE FUTURE FRAME: a clean holographic interface around the letter.
+   The lines draw themselves in (a dash sliding along each line), then the readouts fade up. */
+
+#future-frame { z-index: 20; }
+
+.frame-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.frame-line {
+  fill: none;
+  stroke: var(--signal-cyan);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;          /* stays 1.5 pixels thin however the frame stretches */
+  opacity: 0.75;
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  filter: drop-shadow(0 0 4px rgba(111, 243, 255, 0.7));
+}
+/* Only once the intro is over (letter.js adds .is-started to the page). */
+.is-started .frame-line { animation: frame-draws-in 1.6s ease-out 0.2s forwards; }
+.frame-line.faint { opacity: 0.25; stroke: var(--panel-gold); }
+.is-started .frame-line.faint { animation-delay: 0.7s; }
+@keyframes frame-draws-in { to { stroke-dashoffset: 0; } }
+
+.readout {
+  position: absolute;
+  margin: 0;
+  font: 500 11px/1 "Cinzel", Georgia, serif;
+  letter-spacing: 0.28em;
+  color: rgba(111, 243, 255, 0.75);
+  text-shadow: 0 0 8px rgba(111, 243, 255, 0.5);
+  opacity: 0;
+}
+.is-started .readout { animation: readout-appears 0.8s ease 1.6s forwards; }
+.top-left     { top: 4.5vh;  left: 4vw; }
+.top-right    { top: 4.5vh;  right: 4vw; }
+.bottom-left  { bottom: 4.5vh; left: 4vw; }
+.bottom-right { bottom: 4.5vh; right: 4vw; }
+@keyframes readout-appears { to { opacity: 1; } }
+.blink { color: var(--terminal-green); animation: blink 1.6s steps(2, start) infinite; }
+@keyframes blink { to { visibility: hidden; } }
+
+/* On phones the readouts would crowd the letter: keep only the top two, smaller. */
+@media (max-width: 600px) {
+  .readout { font-size: 8px; letter-spacing: 0.18em; }
+  .bottom-left, .bottom-right { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame-line, .is-started .frame-line { animation: none; stroke-dashoffset: 0; }
+  .readout, .is-started .readout { animation: none; opacity: 1; }
+  .blink { animation: none; }
+}

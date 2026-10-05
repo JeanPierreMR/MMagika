@@ -1,0 +1,93 @@
+{% extends "shared/page.html" %}
+{% load static %}
+{% comment %}
+  CHAPTER 1 — THE VAULT. Start reading here for this chapter.
+
+  An old, rusty vault door set in a concrete wall, long forgotten: dust drifts in a
+  flickering light, and a red handprint is smeared across it.
+  Below it, a plate with twelve rotating dials. The right combination opens it.
+
+  What's where:
+    vault.css               the scene: wall, door, rust, light, dust, the opening
+    combination_dials.js    the twelve dials (turning, ticking, typing)
+    vault.js                builds the leaves and dust, the gentle parallax, and opening the door
+    images/                 the photo textures (CC0, see image_credits.md)
+  The combination is only checked by the site (chapters/views.py); it is not in this page.
+{% endcomment %}
+
+{% block title %}The vault{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'vault/vault.css' %}" nonce="{{ csp_nonce }}">
+{% endblock %}
+
+{% block body %}
+<main id="vault-scene" aria-label="An old vault door with a combination lock">
+  <div class="wall layer" aria-hidden="true"></div>
+  {# The light from inside, behind the door: it shows only round its edges ("Opening" in vault.css). #}
+  <div class="blinding-light" aria-hidden="true"></div>
+  <div class="door-frame" aria-hidden="true">
+    {# The light that pours out once the door swings open, behind it. #}
+    <div class="light-behind-the-door"></div>
+    <div class="door">
+      <div class="door-face"></div>
+      <div class="rust-creep"></div>
+      <div class="rivets"></div>
+      {# Six heavy bolts around the edge; they slide back when the vault opens. #}
+      <div class="bolts"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+      {# The red handprint: a hand drawn by us, its edges roughened and its paint grained with rust. #}
+      <svg class="handprint" viewBox="0 0 200 240">
+        <defs>
+          <filter id="smeared-paint" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="12" result="wobble"/>
+            <feDisplacementMap in="SourceGraphic" in2="wobble" scale="9" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="20" result="grain"/>
+            <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 1.7" result="speckles"/>
+            <feComposite in="rough" in2="speckles" operator="in"/>
+          </filter>
+        </defs>
+        <g filter="url(#smeared-paint)" fill="#a30d10">
+          <ellipse cx="100" cy="160" rx="54" ry="58"/>                       {# the palm #}
+          <rect x="52" y="44" width="22" height="104" rx="11" transform="rotate(-9 63 148)"/>    {# index finger #}
+          <rect x="79" y="22" width="23" height="120" rx="11.5" transform="rotate(-2 90 142)"/> {# middle finger #}
+          <rect x="107" y="30" width="22" height="114" rx="11" transform="rotate(5 118 144)"/> {# ring finger #}
+          <rect x="133" y="62" width="19" height="92" rx="9.5" transform="rotate(13 142 154)"/> {# little finger #}
+          <rect x="22" y="128" width="22" height="78" rx="11" transform="rotate(-48 33 206)"/>  {# thumb #}
+          <path d="M70 212 q-4 18 2 28 M118 214 q3 14 -1 24" stroke="#a30d10" stroke-width="6" stroke-linecap="round" fill="none"/>  {# drips #}
+        </g>
+      </svg>
+
+      {# The wheel in the middle. It spins when the vault opens. #}
+      <svg class="wheel" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="78" fill="none" stroke="#2b2622" stroke-width="12"/>
+        <circle cx="100" cy="100" r="78" fill="none" stroke="#8b7d6c" stroke-width="3" opacity="0.5"/>
+        <g stroke="#3a332d" stroke-width="10" stroke-linecap="round">
+          <line x1="100" y1="28" x2="100" y2="172"/><line x1="28" y1="100" x2="172" y2="100"/>
+          <line x1="49" y1="49" x2="151" y2="151"/><line x1="151" y1="49" x2="49" y2="151"/>
+        </g>
+        <circle cx="100" cy="100" r="22" fill="#2b2622" stroke="#7a6a58" stroke-width="3"/>
+        <circle cx="100" cy="100" r="7" fill="#7a6a58"/>
+      </svg>
+    </div>
+  </div>
+
+  {# Dust drifting in the air. #}
+  <div class="dust layer" aria-hidden="true"></div>
+  <div class="flickering-light layer" aria-hidden="true"></div>
+  <div class="vignette layer" aria-hidden="true"></div>
+
+  {# The plate with the twelve dials, and a line of status text. #}
+  <section class="dial-plate" aria-label="Combination lock">
+    <p class="plate-engraving" aria-hidden="true">EVERAFTER · SECTOR 12 · SEALED</p>
+    <div id="dials" class="dials" role="group" aria-label="Combination, twelve dials. Use the arrow keys or type each character, then press Enter."></div>
+    <p id="lock-status" class="lock-status" role="status" aria-live="polite">TURN THE DIALS · PRESS ENTER OR THE WHEEL</p>
+  </section>
+
+  <button id="turn-the-wheel" class="turn-the-wheel" type="button" aria-label="Turn the wheel to try the combination"></button>
+  <div class="overexposure layer" aria-hidden="true"></div>
+  <div class="step-through layer" aria-hidden="true"></div>
+</main>
+
+<script type="module" src="{% static 'vault/vault.js' %}" nonce="{{ csp_nonce }}"></script>
+{% endblock %}

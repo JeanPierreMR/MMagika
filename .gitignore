@@ -6,3 +6,5 @@ collected_static/
 .env
 magenv/
 *.kate-swp
+chapters/letter/scroll_and_wax_seal/letter_video_new/
+private_data/

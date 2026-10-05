@@ -1,0 +1,105 @@
+// THE COLOUR FIELD: the soft rainbow dots that flow inside the letter.
+// Used by render_frames.html (to make colour_field.webp) and by ../letter_video/render_letter.html
+// (to paint the same colours straight into the letter videos), so both always match.
+// paintFrame(loopShare) paints one moment of the 36-second loop (0 = start, 1 = end) into `frame`.
+
+// ---- Settings -------------------------------------------------------------------------
+export const TILE_WIDTH = 1160;        // in the letter's drawing units (the text is 1040 wide, plus room)
+export const TILE_HEIGHT = 520;
+const PIXELS_PER_UNIT = 0.5;    // the colours are soft, so half resolution is plenty
+const DOTS = 450;               // closely packed, so the colours fill the letters without gaps
+export const LOOP_SECONDS = 36;
+export const FRAMES_PER_SECOND = 15;
+const RAINBOW_SPREAD = 340;     // degrees of colour wheel across the text
+const SOFTNESS = 14;            // the blur (stdDeviation in the old SVG filter)
+const PADDING = 60;             // the text starts this far inside the tile
+
+// A random number maker that gives the same numbers every time, so the file can be remade exactly.
+let seed = 20260929;
+function random() {
+  seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
+// ---- The dots ------------------------------------------------------------------------------
+// Each dot drifts in a straight line that wraps around the tile, plus a gentle sideways sway,
+// like the old wandering dots. Speeds match the old ones (about 10 to 34 units a second).
+const dots = [];
+for (let i = 0; i < DOTS; i++) {
+  const x = random() * TILE_WIDTH;
+  const y = random() * TILE_HEIGHT;
+  const across = (x - PADDING) / (TILE_WIDTH - PADDING * 2);
+  // The old colours also shifted a little from top to bottom; here that shift rises and falls
+  // again within the tile, so stacked tiles meet without a seam.
+  const down = (1 - Math.cos((2 * Math.PI * y) / TILE_HEIGHT)) / 2;
+  const hue = (across * RAINBOW_SPREAD + down * RAINBOW_SPREAD * 0.22 + (random() - 0.5) * 26 + 720) % 360;
+  // How many whole tiles it crosses in one loop, sideways and downwards.
+  const kind = random();
+  const sign = () => (random() < 0.5 ? -1 : 1);
+  const [tilesAcross, tilesDown] = kind < 0.45 ? [0, sign()] : kind < 0.8 ? [sign(), 0] : [sign(), sign()];
+  dots.push({
+    x, y, tilesAcross, tilesDown,
+    sway: 15 + random() * 35, swayTimes: 1 + Math.floor(random() * 3), swayStart: random() * Math.PI * 2,
+    radius: 16 + random() * 26,
+    colour: `hsl(${hue.toFixed(1)}, ${(82 + random() * 15).toFixed(1)}%, ${(55 + random() * 12).toFixed(1)}%)`,
+    opacity: 0.55 + random() * 0.28,
+  });
+}
+
+function whereIs(dot, loopShare) {       // loopShare: 0 at the start of the loop, 1 at the end
+  const angle = 2 * Math.PI * loopShare;
+  const travelX = dot.tilesAcross * TILE_WIDTH * loopShare;
+  const travelY = dot.tilesDown * TILE_HEIGHT * loopShare;
+  // The sway goes across the direction of travel.
+  const swayAmount = dot.sway * Math.sin(angle * dot.swayTimes + dot.swayStart);
+  const length = Math.hypot(dot.tilesAcross * TILE_WIDTH, dot.tilesDown * TILE_HEIGHT);
+  const sideX = -(dot.tilesDown * TILE_HEIGHT) / length;
+  const sideY = (dot.tilesAcross * TILE_WIDTH) / length;
+  const wrap = (value, size) => ((value % size) + size) % size;
+  return {
+    x: wrap(dot.x + travelX + sideX * swayAmount, TILE_WIDTH),
+    y: wrap(dot.y + travelY + sideY * swayAmount, TILE_HEIGHT),
+  };
+}
+
+// ---- Painting a frame -------------------------------------------------------------------------
+const width = Math.round(TILE_WIDTH * PIXELS_PER_UNIT);
+const height = Math.round(TILE_HEIGHT * PIXELS_PER_UNIT);
+const margin = Math.ceil(SOFTNESS * PIXELS_PER_UNIT * 3);     // room for the blur to spread
+const sharp = document.createElement("canvas");
+sharp.width = width + margin * 2;
+sharp.height = height + margin * 2;
+const sharpPen = sharp.getContext("2d");
+export const frame = document.createElement("canvas");
+frame.width = width;
+frame.height = height;
+const framePen = frame.getContext("2d");
+
+export function paintFrame(loopShare) {
+  // 1. Sharp circles, drawn again one tile over on every side so the edges wrap seamlessly.
+  sharpPen.setTransform(1, 0, 0, 1, 0, 0);
+  sharpPen.clearRect(0, 0, sharp.width, sharp.height);
+  sharpPen.setTransform(PIXELS_PER_UNIT, 0, 0, PIXELS_PER_UNIT, margin, margin);
+  for (const dot of dots) {
+    const at = whereIs(dot, loopShare);
+    sharpPen.fillStyle = dot.colour;
+    sharpPen.globalAlpha = dot.opacity;
+    for (const shiftX of [-TILE_WIDTH, 0, TILE_WIDTH]) {
+      for (const shiftY of [-TILE_HEIGHT, 0, TILE_HEIGHT]) {
+        sharpPen.beginPath();
+        sharpPen.arc(at.x + shiftX, at.y + shiftY, dot.radius, 0, Math.PI * 2);
+        sharpPen.fill();
+      }
+    }
+  }
+  // 2. Blur them all together (like the old SVG blur), onto black. With "screen" blending,
+  //    black changes nothing, so this looks exactly like the see-through original.
+  framePen.filter = "none";
+  framePen.fillStyle = "#000";
+  framePen.fillRect(0, 0, width, height);
+  framePen.filter = `blur(${SOFTNESS * PIXELS_PER_UNIT}px)`;
+  framePen.drawImage(sharp, -margin, -margin);
+}
+

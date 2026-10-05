@@ -1,0 +1,11 @@
+{% load static %}
+{% comment %}
+  THE BLUEPRINT INTRO: the letter page starts in black; the outline of the scroll draws itself in
+  futuristic blue, as if the machine were scanning it; it fades back to black; then the whole page
+  fades in from black. blueprint_intro.js draws the outline from where the real scroll is, so it
+  always lines up. Timings: the numbers at the top of blueprint_intro.js.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'letter/blueprint_intro/blueprint_intro.css' %}" nonce="{{ csp_nonce }}">
+<div class="blueprint-intro" aria-hidden="true">
+  <svg class="blueprint"></svg>
+</div>

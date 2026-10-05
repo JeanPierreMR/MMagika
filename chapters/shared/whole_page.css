@@ -1,0 +1,54 @@
+/* Colours and layout shared by every chapter. */
+
+:root {
+  --night: #050407;          /* the background behind everything */
+  --rust: #7a3b1c;
+  --rust-dark: #3a1a0c;
+  --blood: #8e0f12;          /* the handprint */
+  --moss: #3f5a2b;
+  --panel-gold: #e6c87e;     /* the mockingjay console and the letter */
+  --signal-cyan: #6ff3ff;    /* the future interface */
+  --terminal-green: #8dffb5;
+  --text: #e9e3d6;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* "hidden" always means hidden, whatever a chapter's CSS says */
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;          /* each chapter is one screen; nothing scrolls the page itself */
+}
+
+body {
+  background: var(--night);
+  color: var(--text);
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+}
+
+/* A full-screen see-through sheet. Chapters stack a few of these on top of each other. */
+.layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;      /* clicks go straight through */
+}
+
+/* Moving from one chapter's page to the next fades instead of flashing white
+   (browsers that know "view transitions"; others simply change page). */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.6s; }
+
+/* Text only for screen readers (people who listen to the page instead of seeing it). */
+.for-screen-readers {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}

@@ -1,0 +1,369 @@
+/* THE VAULT: a rusty round door in a concrete wall, overgrown, in flickering light.
+   Sizes all follow --door (the door's width), so the scene scales with the screen.
+   --px and --py (set by vault.js, from -1 to 1) follow the mouse: layers drift by different
+   amounts (the "translate" property), which gives a little depth. */
+
+#vault-scene {
+  --door: min(62vmin, 500px);
+  --frame: calc(var(--door) * 1.18);
+  --centre-y: 41vh;                     /* where the door's middle is */
+  --px: 0;
+  --py: 0;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #0b0a09;
+}
+
+/* ---- The wall ------------------------------------------------------------------------- */
+.wall {
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0.7) 85%),
+    linear-gradient(rgba(20, 16, 12, 0.55), rgba(20, 16, 12, 0.55)),
+    url("images/concrete_wall.webp") center / 520px;
+  translate: calc(var(--px) * -6px) calc(var(--py) * -6px);
+  scale: 1.04;                          /* a little bigger, so its edges never show when it drifts */
+}
+
+/* ---- The door and its frame ---------------------------------------------------------------- */
+.door-frame {
+  position: absolute;
+  left: 50%;
+  top: var(--centre-y);
+  width: var(--frame);
+  height: var(--frame);
+  transform: translate(-50%, -50%);
+  translate: calc(var(--px) * -12px) calc(var(--py) * -12px);
+  border-radius: 50%;
+  perspective: 1400px;                  /* the door swings open in 3D */
+  /* The frame: a thick ring of darker steel, bevelled. */
+  background:
+    radial-gradient(circle, #050403 0 61%, transparent 62%),
+    radial-gradient(circle at 40% 35%, rgba(255, 240, 220, 0.12), rgba(0, 0, 0, 0.6) 75%),
+    url("images/rusty_steel.webp") center / 140%;
+  background-blend-mode: normal, normal, multiply;
+  background-color: #4a3423;            /* tints the frame's steel rust-brown */
+  box-shadow: 0 0 0 3px #1d1915, 0 18px 60px rgba(0, 0, 0, 0.85), inset 0 0 30px rgba(0, 0, 0, 0.9);
+}
+
+/* What's behind the door: light, waiting. */
+.light-behind-the-door {
+  position: absolute;
+  inset: 7.5%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbea 0%, #ffe3a1 35%, #c9862f 70%, #3a2210 100%);
+  opacity: 0;
+  transition: opacity 2.4s ease 1.6s;
+}
+
+.door {
+  position: absolute;
+  inset: 7.5%;
+  border-radius: 50%;
+  transform-origin: 0% 50%;             /* the hinge is on the left */
+  transform-style: preserve-3d;
+  transition: transform 2.8s cubic-bezier(0.45, 0, 0.2, 1) 1.5s;
+  box-shadow: 0 0 0 2px #14110e, 6px 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+/* The steel, lit from the top left, with a raised rim and a darker centre plate. */
+.door-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 246, 228, 0.16), rgba(0, 0, 0, 0) 55%),
+    radial-gradient(circle, rgba(0, 0, 0, 0) 0 47%, rgba(0, 0, 0, 0.45) 48%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0) 86%, rgba(255, 240, 220, 0.12) 88%, rgba(0, 0, 0, 0.55) 100%),
+    url("images/rusty_steel.webp") center / 120%;
+  filter: brightness(0.55) sepia(0.35) contrast(1.15);   /* old, dull, yellowed steel */
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.75);
+}
+
+/* Thick rust creeping in from the edges. */
+.rust-creep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: url("images/heavy_rust.webp") center / 90%;
+  mix-blend-mode: multiply;
+  -webkit-mask-image: radial-gradient(circle at 45% 58%, rgba(0, 0, 0, 0.35) 20%, rgba(0, 0, 0, 0.95) 72%);
+  mask-image: radial-gradient(circle at 45% 58%, rgba(0, 0, 0, 0.35) 20%, rgba(0, 0, 0, 0.95) 72%);
+}
+
+/* Rivets around the rim (placed by vault.js). */
+.rivets { position: absolute; inset: 0; }
+.rivet {
+  position: absolute;
+  width: 3.2%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% -50%;
+  background: radial-gradient(circle at 35% 30%, #b9a991, #4a3f34 55%, #1b1612);
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* Six bolts sticking out into the frame; they slide back in when the vault opens. */
+.bolts { position: absolute; inset: 0; }
+.bolts i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7%;
+  height: 54%;
+  margin-left: -3.5%;
+  transform-origin: 50% 0%;
+  transform: rotate(var(--bolt-angle)) translateY(0);       /* pointing out from the middle */
+  transition: transform 0.5s cubic-bezier(0.6, 0, 0.4, 1);
+}
+.bolts i::after {                        /* the visible end of the bolt, at the rim */
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3%;
+  height: 14%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #2a241f, #8f8170 45%, #3b332c);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+.bolts i:nth-child(1) { --bolt-angle: 0deg; }
+.bolts i:nth-child(2) { --bolt-angle: 60deg; }
+.bolts i:nth-child(3) { --bolt-angle: 120deg; }
+.bolts i:nth-child(4) { --bolt-angle: 180deg; }
+.bolts i:nth-child(5) { --bolt-angle: 240deg; }
+.bolts i:nth-child(6) { --bolt-angle: 300deg; }
+
+/* The red handprint, pressed onto the steel (multiply lets the rust show through it). */
+.handprint {
+  position: absolute;
+  left: 12%;
+  top: 7%;
+  width: 29%;
+  rotate: -14deg;
+  mix-blend-mode: multiply;
+  filter: saturate(1.4);
+}
+
+/* The wheel in the middle. */
+.wheel {
+  position: absolute;
+  left: 33%;
+  top: 33%;
+  width: 34%;
+  filter: drop-shadow(3px 5px 6px rgba(0, 0, 0, 0.8));
+  transition: rotate 1.6s cubic-bezier(0.5, 0, 0.3, 1) 0.4s;
+}
+/* An invisible button right over the wheel: clicking the wheel tries the combination. */
+.turn-the-wheel {
+  position: absolute;
+  left: 50%;
+  top: var(--centre-y);
+  width: calc(var(--door) * 0.34);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.turn-the-wheel:focus-visible { outline: 2px solid var(--panel-gold); outline-offset: 4px; }
+
+/* ---- Air and light ---------------------------------------------------------------------- */
+.dust { translate: calc(var(--px) * -26px) calc(var(--py) * -26px); }
+.mote {
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: rgba(255, 236, 200, 0.55);
+  box-shadow: 0 0 6px rgba(255, 220, 170, 0.45);
+  opacity: 0;
+  animation: mote-drifts var(--time) linear var(--delay) infinite;
+}
+@keyframes mote-drifts {
+  0%   { opacity: 0;   transform: translate(0, 0); }
+  15%  { opacity: 0.8; }
+  85%  { opacity: 0.6; }
+  100% { opacity: 0;   transform: translate(var(--dx), var(--dy)); }
+}
+
+/* A dim, warm light from above that flickers now and then, like a failing bulb. */
+.flickering-light {
+  background: radial-gradient(ellipse at 38% -5%, rgba(255, 196, 130, 0.22), rgba(255, 196, 130, 0) 62%);
+  mix-blend-mode: screen;
+  animation: bulb-flickers 11s steps(1) infinite;
+}
+@keyframes bulb-flickers {
+  0%, 61%, 63.5%, 66%, 100% { opacity: 1; }
+  62%                       { opacity: 0.35; }
+  64%                       { opacity: 0.6; }
+  65%                       { opacity: 0.2; }
+}
+.vignette { background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 35%, rgba(0, 0, 0, 0.85) 100%); }
+
+/* ---- The dial plate ------------------------------------------------------------------------ */
+.dial-plate {
+  --face-h: clamp(22px, 3.6vh, 36px);
+  position: absolute;
+  left: 50%;
+  bottom: 3.5vh;
+  translate: -50% 0;
+  padding: 10px clamp(10px, 2vw, 22px) 12px;
+  border-radius: 10px;
+  background:
+    linear-gradient(rgba(10, 8, 6, 0.72), rgba(10, 8, 6, 0.72)),
+    url("images/rusty_steel.webp") center / 400px;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 220, 0.12), inset 0 0 18px rgba(0, 0, 0, 0.9), 0 10px 30px rgba(0, 0, 0, 0.8);
+  text-align: center;
+  font-family: "Cinzel", Georgia, serif;
+}
+.plate-engraving, .lock-status {
+  margin: 0;
+  font-size: clamp(8px, 1.1vh, 11px);
+  letter-spacing: 0.32em;
+  color: rgba(214, 196, 168, 0.55);
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 240, 220, 0.12);   /* engraved */
+}
+.lock-status { margin-top: 8px; transition: color 0.3s; }
+.lock-status.is-denied { color: #ff5a4f; animation: status-flickers 0.6s steps(2) 2; }
+.lock-status.is-granted { color: var(--terminal-green); }
+@keyframes status-flickers { 50% { opacity: 0.3; } }
+
+.dials { display: flex; gap: clamp(3px, 0.6vw, 7px); justify-content: center; margin-top: 8px; }
+.dials.is-shaking { animation: dials-shudder 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes dials-shudder {
+  20%, 60% { translate: -6px 0; }
+  40%, 80% { translate: 6px 0; }
+}
+.dials.is-locked { pointer-events: none; }
+
+/* One dial: a window onto a 3D drum of characters. */
+.dial {
+  /* The drum's radius: --faces faces of --face-h around it (half a face ÷ tan of half the angle).
+     Worked out for 10 digit faces (1.539) and 26 letter faces (4.13); see .dial.letters below. */
+  --r: calc(var(--face-h) * 1.539);
+  position: relative;
+  width: clamp(20px, 4.4vw, 44px);
+  height: calc(var(--face-h) * 3);
+  overflow: hidden;
+  border-radius: 5px;
+  perspective: calc(var(--face-h) * 16);
+  background: #0d0b09;
+  box-shadow: inset 0 0 0 1px #2c2620, inset 0 3px 8px rgba(0, 0, 0, 0.9);
+  cursor: ns-resize;
+  touch-action: none;                   /* dragging turns the drum instead of scrolling the page */
+  outline: none;
+}
+.dial.letters { --r: calc(var(--face-h) * 4.13); }
+.dial:focus-visible { box-shadow: inset 0 0 0 1px #2c2620, 0 0 0 2px var(--panel-gold); }
+.drum {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: translateZ(calc(var(--r) * -1)) rotateX(var(--turn, 0deg));
+}
+.drum.is-gliding { transition: transform 0.22s cubic-bezier(0.3, 0.7, 0.3, 1); }
+.face {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - var(--face-h) / 2);
+  height: var(--face-h);
+  display: grid;
+  place-items: center;
+  transform: rotateX(var(--angle)) translateZ(var(--r));
+  backface-visibility: hidden;
+  font: 700 calc(var(--face-h) * 0.62) / 1 "Cinzel", Georgia, serif;
+  color: #d8c8ae;
+  background: linear-gradient(#2a241e, #3b332b 50%, #2a241e);
+  border-top: 1px solid rgba(0, 0, 0, 0.6);
+  border-bottom: 1px solid rgba(255, 240, 220, 0.08);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.9);
+}
+/* The drum's curve: darker towards the top and bottom, a thin bright line through the middle. */
+.dial::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.85)),
+    linear-gradient(transparent calc(50% - var(--face-h) / 2), rgba(230, 200, 126, 0.25) calc(50% - var(--face-h) / 2), transparent calc(50% - var(--face-h) / 2 + 1px), transparent calc(50% + var(--face-h) / 2 - 1px), rgba(230, 200, 126, 0.25) calc(50% + var(--face-h) / 2), transparent calc(50% + var(--face-h) / 2));
+}
+.dial.is-right .face { color: #c9ffd9; text-shadow: 0 0 8px rgba(141, 255, 181, 0.9); }
+
+/* ---- Opening: the light from inside, then the whole view burns out --------------------------
+   Seconds after the right combination:
+     0.0  the bolts slide back            0.4–2.0  the wheel spins
+     1.2  light leaks round the door's edge
+     1.6  the door starts to open (only a little: by then the light is too bright to see it)
+     1.8–3.0  the doorway glows (.blinding-light), staying round the door
+     1.9–3.3  the whole view is over-exposed at once, like a camera pointed at the sun
+              (.overexposure): the bright parts burn out first, then everything
+     3.0–3.8  pure white: the visitor steps through (vault.js opens the next chapter at 4.0) */
+#vault-scene.is-opening .wheel { rotate: 540deg; }
+#vault-scene.is-opening .bolts i { transform: rotate(var(--bolt-angle)) translateY(-22%); }   /* slide back into the door */
+#vault-scene.is-opening .turn-the-wheel { pointer-events: none; }
+#vault-scene.is-opening .light-behind-the-door { opacity: 1; transition-delay: 1.2s; transition-duration: 0.8s; }
+#vault-scene.is-opening .door {
+  transform: rotateY(-24deg);
+  transition-delay: 1.6s;
+  transition-duration: 2.4s;
+  box-shadow: 0 0 0 2px #fff1c9, 0 0 40px 12px rgba(255, 236, 190, 0.9);   /* light leaking round the edge */
+}
+
+/* The light from inside: a glow that fills the doorway and spills a little past it. */
+.blinding-light {
+  position: absolute;
+  left: 50%;
+  top: var(--centre-y);
+  width: var(--door);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, #ffffff 0%, #fffbe8 28%, rgba(255, 236, 190, 0.85) 48%, rgba(255, 214, 150, 0.35) 66%, rgba(255, 214, 150, 0) 72%);
+  mix-blend-mode: screen;               /* light adds to what's there */
+  opacity: 0;
+  scale: 0.35;
+}
+#vault-scene.is-opening .blinding-light {
+  opacity: 1;
+  scale: 1.5;                           /* how far past the doorway it spills */
+  transition: opacity 0.6s ease-in 1.8s, scale 1.2s ease-out 1.8s;
+}
+
+/* The whole view burning out: everything behind this layer is made much brighter and paler, so
+   the light parts go white first and the dark wall last, as in an over-exposed photo. A warm wash,
+   a little stronger round the door where the light comes from. Fading it in (opacity) turns the
+   burn up smoothly. */
+.overexposure {
+  background: radial-gradient(circle at 50% var(--centre-y), rgba(255, 246, 220, 0.75), rgba(255, 236, 200, 0.5) 75%);
+  -webkit-backdrop-filter: brightness(10) saturate(0.3);
+  backdrop-filter: brightness(10) saturate(0.3);
+  opacity: 0;
+  transition: opacity 1.4s cubic-bezier(0.6, 0, 0.9, 0.5) 1.9s;   /* slow at first, then all at once */
+}
+#vault-scene.is-opening .overexposure { opacity: 1; }
+
+.step-through {
+  background: #fffdf5;
+  opacity: 0;
+  transition: opacity 0.8s ease-in 3s;
+}
+#vault-scene.is-opening .step-through { opacity: 1; }
+
+/* ---- Phones ------------------------------------------------------------------------------------ */
+@media (max-width: 600px) {
+  #vault-scene { --door: 74vw; --centre-y: 36vh; }
+  .dial-plate { --face-h: 24px; width: calc(100vw - 16px); padding-inline: 6px; }
+  .dial { width: calc((100vw - 16px - 12px - 11 * 3px) / 12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mote { opacity: 0.4; }
+  .wall, .door-frame, .dust { translate: none; }
+  .door, .wheel, .bolts i, .light-behind-the-door, .step-through { transition-duration: 0.01s; transition-delay: 0s; }
+  #vault-scene.is-opening .blinding-light { transition: opacity 0.6s ease-in; scale: 1; }
+  .overexposure { transition: opacity 0.6s ease-in 0.4s; }
+}

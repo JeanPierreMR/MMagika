@@ -1,0 +1,79 @@
+{% extends "shared/page.html" %}
+{% load static %}
+{% comment %}
+  CHAPTER 3 — THE TERMINAL. Start reading here for this chapter.
+
+  1. The machine crashes: a Linux kernel panic pours down the screen (kernel_panic.txt, in the real
+     format, written by us), the screen tears, one second of black.
+  2. A futuristic but broken terminal wakes up and types the EverAfter mission file, Kids Next Door
+     style. Letters arrive as odd symbols and settle; a few stay broken. While it types, the screen
+     glitches now and then (colours split, bars of interference, letters scrambling for a moment).
+  3. A bright wipe to the clean future interface: "Welcome Doctor · Starting letter ***", which
+     flies up and fades away, and the letter chapter opens.
+
+  THE SCRIPT is the list below: edit the lines freely. On each line:
+    data-pause="900"   milliseconds to wait after it, so it can be read (default 900)
+    data-working="2400"   the machine works on it first: a progress bar fills for that many
+                       milliseconds (stalling now and then) before the pause
+  THE CRASH is kernel_panic.txt. A line "[wait 1500]" in it stops the text for that many
+  milliseconds (with a blinking cursor), as if the machine were busy.
+    class="red" / "green" / "dim"   its colour
+    class="heading"    typed fast, in large capitals
+  What's where:
+    terminal.css        the crash, the glitched screen, the clean future interface
+    glitch_typing.js    the order of events above, and how often things glitch
+{% endcomment %}
+
+{% block title %}EverAfter protocol{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'terminal/terminal.css' %}" nonce="{{ csp_nonce }}">
+{% endblock %}
+
+{% block body %}
+<main id="terminal-scene">
+  {# 1. The crash. #}
+  <section class="kernel-panic" aria-label="The machine has crashed">
+    <pre class="panic-text"></pre>
+  </section>
+  <template id="kernel-panic-text">{% include "terminal/kernel_panic.txt" %}</template>
+
+  {# 2. The terminal. #}
+  <section class="terminal" hidden aria-label="Terminal">
+    <ol id="script" class="script" aria-hidden="true">
+      <li class="heading" data-pause="800">OPERATION: E.V.E.R.A.F.T.E.R.</li>
+      <li class="dim" data-pause="1600">Emergency · Vital · Escape · Route · Activated · For · The · Elite · Recruit</li>
+      <li class="red" data-working="2200" data-pause="900">AI interface failed, initializing EverAfter protocol.</li>
+      <li data-pause="1300">New Soldier detected</li>
+      <li class="green" data-pause="1600">Proficiencies detected --- high priority member identified</li>
+      <li data-working="3000" data-pause="900">Activating Holo-v13, bypassing <span class="red">Red Firewall</span></li>
+      <li data-pause="1400">Network Refuge Dreamers Found</li>
+      <li data-working="3200" data-pause="600">Innitiating tunnel,</li>
+      <li class="green" data-pause="1300">Connected</li>
+      <li data-working="2000" data-pause="1300">Loading protocol, elite member welcomed</li>
+      <li class="heading" data-pause="1000">Revolution Axis</li>
+      <li class="dim" data-pause="2200">Fighting Dreamers branch undisclosed Battalion #undisclosed</li>
+    </ol>
+    {# The same words, plainly, for screen readers (the typed copy above is only for the eyes). #}
+    <p class="for-screen-readers">
+      Operation EverAfter. AI interface failed, initializing EverAfter protocol. New Soldier detected.
+      Proficiencies detected: high priority member identified. Activating Holo-v13, bypassing Red Firewall.
+      Network Refuge Dreamers found. Initiating tunnel. Connected. Loading protocol, elite member welcomed.
+      Revolution Axis. Fighting Dreamers branch undisclosed, Battalion undisclosed.
+    </p>
+    <span class="cursor" aria-hidden="true"></span>
+  </section>
+  {# Interference bars, shown for an instant when the screen glitches. #}
+  <div class="interference" aria-hidden="true"></div>
+
+  {# 3. The clean future interface, after the wipe. #}
+  <section class="welcome" hidden aria-live="polite">
+    <p class="welcome-title">Welcome Doctor</p>
+    <p class="welcome-sub">Starting letter <span class="pulsing-stars"><i>*</i><i>*</i><i>*</i></span></p>
+  </section>
+  <div class="wipe layer" aria-hidden="true"></div>
+  <div class="blackout layer" aria-hidden="true"></div>
+</main>
+
+<script type="module" src="{% static 'terminal/glitch_typing.js' %}" nonce="{{ csp_nonce }}"></script>
+{% endblock %}

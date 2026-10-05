@@ -1,7 +1,0 @@
-#drawing-line { z-index: 60; }
-
-/* The sparkles canvas is created by the cursor-effects library; wand.js gives it this class. */
-.wand-sparkles {
-  z-index: 60;
-  pointer-events: none;
-}

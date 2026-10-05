@@ -1,0 +1,5 @@
+{% load static %}
+{# THE NIGHT SKY: a full-screen canvas the stars are drawn on. night_sky.js does the drawing. #}
+<link rel="stylesheet" href="{% static 'letter/night_sky/night_sky.css' %}" nonce="{{ csp_nonce }}">
+<canvas id="night-sky" class="layer" aria-hidden="true"></canvas>
+<script type="module" src="{% static 'letter/night_sky/night_sky.js' %}" nonce="{{ csp_nonce }}"></script>

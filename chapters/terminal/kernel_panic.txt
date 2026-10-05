@@ -1,0 +1,60 @@
+[wait 900]
+[  842.117263] holo_v13: signal handshake with mockingjay_rx complete, opening relay
+[wait 1500]
+[  842.117301] mockingjay_rx 0000:03:00.0: DMA mapping error, attempting recovery
+[wait 1800]
+[  842.117355] everafter_tun: tunnel negotiation started (peer: dreamers-refuge.onion.local)
+[wait 2200]
+[  842.117392] BUG: kernel NULL pointer dereference, address: 0000000000000048
+[wait 700]
+[  842.117398] #PF: supervisor read access in kernel mode
+[  842.117401] #PF: error_code(0x0000) - not-present page
+[  842.117405] PGD 0 P4D 0
+[  842.117409] Oops: 0000 [#1] PREEMPT SMP NOPTI
+[  842.117414] CPU: 3 PID: 0 Comm: swapper/3 Tainted: G           OE      6.12.9-capitol #1
+[  842.117419] Hardware name: Capitol Relay Systems DR-12/Holo-V13, BIOS 2.0.26 12/20/2020
+[  842.117422] RIP: 0010:mockingjay_rx_poll+0x9c/0x2f0 [mockingjay_rx]
+[  842.117431] Code: 48 8b 47 48 48 85 c0 74 6d 4c 8b 60 08 4d 85 e4 0f 84 8b 01 00 00 <49> 8b 44 24 48 a8 01
+[  842.117436] RSP: 0018:ffffb3c240190e98 EFLAGS: 00010286
+[  842.117440] RAX: 0000000000000000 RBX: ffff9e2a4c3d8000 RCX: 0000000000000012
+[  842.117443] RDX: 0000000000000000 RSI: ffff9e2a41a2c900 RDI: ffff9e2a4c3d8a80
+[  842.117446] RBP: ffffb3c240190ef0 R08: 0000000000000001 R09: 0000000000000000
+[  842.117449] R10: 0000000000000040 R11: 0000000000000040 R12: 0000000000000000
+[  842.117452] R13: ffff9e2a4c3d8a80 R14: 0000000000000040 R15: ffff9e2a4c3d8000
+[  842.117455] FS:  0000000000000000(0000) GS:ffff9e2d6fd80000(0000) knlGS:0000000000000000
+[  842.117459] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  842.117462] CR2: 0000000000000048 CR3: 000000011f60a003 CR4: 00000000003706e0
+[wait 400]
+[  842.117465] Call Trace:
+[  842.117467]  <IRQ>
+[  842.117470]  ? __die+0x23/0x70
+[  842.117476]  ? page_fault_oops+0x171/0x4e0
+[  842.117481]  ? exc_page_fault+0x7f/0x180
+[  842.117486]  ? asm_exc_page_fault+0x26/0x30
+[  842.117491]  ? mockingjay_rx_poll+0x9c/0x2f0 [mockingjay_rx]
+[  842.117498]  __napi_poll+0x2b/0x1c0
+[  842.117502]  net_rx_action+0x2c6/0x370
+[  842.117507]  everafter_tun_xmit+0x1d4/0x3b0 [everafter_tun]
+[  842.117513]  holo_v13_firewall_bypass+0x88/0x140 [holo_v13]
+[  842.117519]  handle_softirqs+0xe1/0x2c0
+[  842.117524]  __irq_exit_rcu+0x97/0xb0
+[  842.117528]  common_interrupt+0x85/0xa0
+[  842.117532]  </IRQ>
+[  842.117534]  <TASK>
+[  842.117536]  asm_common_interrupt+0x26/0x40
+[  842.117540] RIP: 0010:cpuidle_enter_state+0xcc/0x440
+[  842.117545]  cpuidle_enter+0x2d/0x40
+[  842.117549]  do_idle+0x1ad/0x210
+[  842.117553]  cpu_startup_entry+0x29/0x30
+[  842.117557]  start_secondary+0x11e/0x140
+[  842.117561]  secondary_startup_64_no_verify+0x184/0x18b
+[  842.117566]  </TASK>
+[  842.117568] Modules linked in: mockingjay_rx(OE) holo_v13(OE) everafter_tun(OE) red_firewall nf_tables snd_hda_intel
+[  842.117583] CR2: 0000000000000048
+[  842.117586] ---[ end trace 0000000000000000 ]---
+[  842.117590] RIP: 0010:mockingjay_rx_poll+0x9c/0x2f0 [mockingjay_rx]
+[wait 900]
+[  842.117601] Kernel panic - not syncing: Fatal exception in interrupt
+[wait 1200]
+[  842.117712] Kernel Offset: 0x2e600000 from 0xffffffff81000000 (relocation range: 0xffffffff80000000-0xffffffffbfffffff)
+[  842.117725] ---[ end Kernel panic - not syncing: Fatal exception in interrupt ]---

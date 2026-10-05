@@ -1,0 +1,20 @@
+/* THE LETTER VIDEOS: each paragraph is two videos in the same spot; their black disappears with "screen"
+   blending against the dark paper.
+   "screen" only works if nothing between the video and the paper is fading: a fading (see-through)
+   element is painted on its own first, where there is no paper, so the black would show.
+   So here the letter itself is never faded; only its other parts are, and the videos need no fade
+   (a writing video starts all black, which is already invisible). */
+.letter, .scroll.is-open .letter { opacity: 1; transition: none; }
+.letter > :not(.paragraph-holder) { opacity: 0; transition: opacity 1.6s ease; }
+.scroll.is-open .letter > :not(.paragraph-holder) { opacity: 1; transition-delay: 2s; }
+
+.paragraph-holder { position: relative; width: 100%; }
+.paragraph-holder video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.paragraph-holder video.waiting { visibility: hidden; }

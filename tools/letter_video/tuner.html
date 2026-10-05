@@ -1,0 +1,192 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Letter tuner</title>
+<!--
+  A quick tool for tinkering with the letter's animation before rendering the letter videos.
+  Change the settings on the left and watch the preview; "Save" writes settings.json, which
+  render_letter.html uses. The preview is painted by the same code as the videos (letter_painter.js).
+  Open it through the helper: python tools/letter_video/save_videos.py, then
+  http://localhost:8003/tools/letter_video/tuner.html
+-->
+<style>
+  @font-face { font-family: "Grenze Gotisch"; src: url("/chapters/shared/fonts/grenze-gotisch.woff2") format("woff2"); font-weight: 400 900; }
+  body { margin: 0; display: flex; height: 100vh; background: #111; color: #ddd; font: 12px system-ui; }
+  #panel { width: 300px; padding: 10px; overflow: auto; border-right: 1px solid #333; flex: none; }
+  #panel h3 { margin: 12px 0 4px; font-size: 12px; color: #c9a7ff; }
+  label { display: grid; grid-template-columns: 110px 1fr 52px; gap: 6px; align-items: center; margin: 3px 0; }
+  label input[type=range] { width: 100%; }
+  label output { text-align: right; font-variant-numeric: tabular-nums; }
+  button, select { font: inherit; margin: 2px 4px 2px 0; }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #controls { padding: 8px; border-bottom: 1px solid #333; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #controls input[type=range] { flex: 1; min-width: 200px; }
+  #stage { flex: 1; overflow: auto; padding: 16px; background: #1c122b; }   /* the paper's colour */
+  #stage canvas { display: block; width: 100%; max-width: 900px; margin: 0 auto; mix-blend-mode: screen; }
+  #saved { color: #8f8; }
+  pre { white-space: pre-wrap; font-size: 11px; color: #999; }
+</style>
+<div id="panel">
+  <button id="save">Save for the render</button>
+  <button id="reset">Back to defaults</button>
+  <span id="saved"></span>
+  <div id="sliders"></div>
+  <h3>Changed from the defaults</h3>
+  <pre id="changes">nothing</pre>
+</div>
+<div id="main">
+  <div id="controls">
+    <select id="paragraph"></select>
+    <button id="play">▶ Play</button>
+    <select id="speed"><option>1</option><option selected>2</option><option>5</option><option>10</option><option>20</option></select>× speed
+    <input type="range" id="time" min="0" max="100" step="0.05" value="0">
+    <span id="clock">0.0 s</span>
+  </div>
+  <div id="stage"><canvas id="view"></canvas></div>
+</div>
+<script type="module">
+import { settings, loadDefaults, loadTexts, buildParagraphs, paintFrame } from "./letter_painter.js";
+
+// [setting, label, min, max, step, needs a rebuild (layout, timing or sparks change)]
+const GROUPS = {
+  "Layout": [
+    ["fontSize", "Letter size", 24, 70, 1, true], ["letterSpacing", "Letter spacing", 0, 10, 0.5, true],
+    ["lineHeight", "Line height", 36, 100, 1, true], ["lineWidth", "Line width", 700, 1300, 10, true],
+  ],
+  "Writing speed (seconds)": [
+    ["drawTime", "Per word/letter", 0.1, 60, 0.1, true], ["letterGap", "Per letter", 0.01, 0.3, 0.001, true],
+    ["linePause", "Per line", 0, 2, 0.05, true], ["writeBy", "Write by", ["letter", "word"], null, null, true],
+    ["pause", "[pausa]", 0, 6, 0.1, true], ["longPause", "[pausa larga]", 0, 10, 0.1, true],
+    ["silence", "[silencio]", 0, 15, 0.1, true],
+  ],
+  "Ink": [
+    ["traceShare", "Tracing part", 0.05, 0.95, 0.01, false], ["dashLength", "Dash length", 100, 4000, 50, false],
+    ["strokeWidth", "Outline width", 0, 5, 0.1, false], ["gold", "Gold", null],
+  ],
+  "Colours": [
+    ["bloomStart", "Start (of word)", 0, 1, 0.01, true], ["bloomTime", "Fade-in (s)", 0.1, 6, 0.1, false],
+    ["colourStrength", "Strength", 0, 1, 0.01, false], ["colourBlend", "Blend", ["source-over", "screen", "lighter", "overlay", "color"]],
+  ],
+  "Sparks": [
+    ["sparkShare", "Share of letters", 0, 0.6, 0.01, true], ["sparkSize", "Size", 0.2, 6, 0.05, false], ["sparkGlow", "Glow", 0, 4, 0.05, false],
+    ["sparkDistance", "Distance", 0, 3, 0.05, false], ["sparksFadeIn", "Fade-in (s)", 0, 5, 0.1, true],
+  ],
+  "Video": [
+    ["pixelsPerUnit", "Sharpness", 0.4, 1.5, 0.05, true], ["writingFps", "Frames/second", 10, 30, 1, false],
+  ],
+};
+
+const trueDefaults = await loadDefaults();
+
+const texts = await loadTexts();
+let paragraphs = [];
+const paragraphPicker = document.getElementById("paragraph");
+texts.forEach((text, i) => paragraphPicker.add(new Option(`Paragraph ${i + 1}: ${text.split("\n")[0].slice(0, 30)}…`, i)));
+
+const canvas = document.getElementById("view");
+const pen = canvas.getContext("2d");
+const timeSlider = document.getElementById("time");
+const clock = document.getElementById("clock");
+
+// Time on the slider counts from the start of the chosen paragraph; the end goes 10 s past its
+// writing, so you can see the sparks and flowing colours of the loop too.
+function current() { return paragraphs[+paragraphPicker.value]; }
+function fitTimeline() {
+  const p = current();
+  timeSlider.max = (p.writeEnd - p.start + 10).toFixed(2);
+}
+function draw() {
+  const p = current();
+  if (!p) return;
+  const t = +timeSlider.value;
+  paintFrame(p, p.start + t);
+  if (canvas.width !== p.surface.frame.width || canvas.height !== p.surface.frame.height) {
+    canvas.width = p.surface.frame.width; canvas.height = p.surface.frame.height;
+  }
+  pen.drawImage(p.surface.frame, 0, 0);
+  clock.textContent = `${t.toFixed(1)} s of ${(+timeSlider.max).toFixed(1)} · writing ends at ${(p.writeEnd - p.start).toFixed(1)} s`;
+}
+async function rebuild() {
+  paragraphs = await buildParagraphs(texts);
+  fitTimeline();
+  draw();
+}
+
+// ---- The sliders ---------------------------------------------------------------------------
+function showChanges() {
+  const changed = Object.fromEntries(Object.entries(settings).filter(([k, v]) => trueDefaults[k] !== undefined && v !== trueDefaults[k]));
+  document.getElementById("changes").textContent = Object.keys(changed).length ? JSON.stringify(changed, null, 1) : "nothing";
+  return changed;
+}
+let rebuildTimer = null;
+const sliders = document.getElementById("sliders");
+for (const [group, items] of Object.entries(GROUPS)) {
+  sliders.insertAdjacentHTML("beforeend", `<h3>${group}</h3>`);
+  for (const [key, name, min, max, step, needsRebuild] of items) {
+    const label = document.createElement("label");
+    let input;
+    if (min === null) {                                  // a colour
+      input = Object.assign(document.createElement("input"), { type: "color", value: settings[key] });
+    } else if (Array.isArray(min)) {                     // a list of choices
+      input = document.createElement("select");
+      min.forEach((option) => input.add(new Option(option)));
+      input.value = settings[key];
+    } else {
+      input = Object.assign(document.createElement("input"), { type: "range", min, max, step, value: settings[key] });
+    }
+    const output = document.createElement("output");
+    output.textContent = settings[key];
+    label.append(name, input, output);
+    sliders.append(label);
+    input.addEventListener("input", () => {
+      settings[key] = input.type === "range" ? +input.value : input.value;
+      output.textContent = settings[key];
+      document.getElementById("saved").textContent = "";
+      showChanges();
+      if (needsRebuild) { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(rebuild, 150); } else draw();
+    });
+    input.dataset.key = key;
+  }
+}
+
+// ---- Buttons -------------------------------------------------------------------------------------
+document.getElementById("save").addEventListener("click", async () => {
+  const response = await fetch("/settings", { method: "POST", body: JSON.stringify(showChanges()) }).catch(() => null);
+  document.getElementById("saved").textContent = response && response.ok ? "Saved. Now run the render." : "Couldn't save (is the helper running?)";
+});
+document.getElementById("reset").addEventListener("click", async () => {
+  Object.assign(settings, trueDefaults);
+  for (const input of sliders.querySelectorAll("[data-key]")) {
+    input.value = settings[input.dataset.key];
+    input.nextElementSibling.textContent = settings[input.dataset.key];
+  }
+  showChanges();
+  await rebuild();
+});
+paragraphPicker.addEventListener("change", () => { fitTimeline(); timeSlider.value = playTime = 0; draw(); });
+timeSlider.addEventListener("input", () => { playTime = +timeSlider.value; draw(); });
+
+// The playing time is kept here, not read back from the timeline: the timeline rounds to its
+// 0.05 s steps, which would swallow the small steps of slow playback.
+let playing = false, lastNow = 0, playTime = 0;
+const playButton = document.getElementById("play");
+playButton.addEventListener("click", () => {
+  playing = !playing;
+  playButton.textContent = playing ? "❚❚ Pause" : "▶ Play";
+  lastNow = performance.now();
+  playTime = +timeSlider.value;
+  if (playing) requestAnimationFrame(tick);
+});
+function tick(now) {
+  if (!playing) return;
+  const speed = +document.getElementById("speed").value;
+  playTime += ((now - lastNow) / 1000) * speed;
+  lastNow = now;
+  if (playTime > +timeSlider.max) playTime = 0;      // start over
+  timeSlider.value = playTime;
+  draw();
+  requestAnimationFrame(tick);
+}
+
+showChanges();
+await rebuild();
+</script>

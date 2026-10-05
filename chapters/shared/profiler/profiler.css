@@ -1,0 +1,40 @@
+/* THE PROFILER's panel, and the switches it uses to turn parts of the page off one at a time. */
+
+#profiler-panel {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  padding: 12px 14px;
+  background: rgba(10, 8, 16, 0.94);
+  border: 1px solid rgba(201, 167, 255, 0.4);
+  border-radius: 8px;
+  color: #e8e0f5;
+  font: 12px/1.4 system-ui, sans-serif;
+  pointer-events: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
+#profiler-panel h2 { margin: 0 0 6px; font-size: 14px; }
+#profiler-panel h3 { margin: 12px 0 4px; font-size: 12px; color: #c9a7ff; }
+#profiler-panel button { margin: 4px 6px 4px 0; padding: 4px 10px; font: inherit; cursor: pointer; }
+#profiler-panel table { border-collapse: collapse; width: 100%; }
+#profiler-panel td, #profiler-panel th { padding: 2px 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); text-align: right; vertical-align: top; }
+#profiler-panel td:first-child, #profiler-panel th:first-child { text-align: left; }
+.profiler-note { color: #a99bc0; margin: 4px 0; }
+
+/* The switches. */
+.p-no-colour .colour-field { display: none; }
+.p-no-sparks .sparks { display: none; }
+.p-no-writing .gold-letters text, .p-no-writing .mask-letters text { animation-play-state: paused !important; }
+.p-no-scroll-shadow .scroll { filter: none !important; }
+.p-no-letter .decree-svg { display: none; }
+.p-no-sky #night-sky { display: none; }
+.p-no-wand #drawing-line, .p-no-wand .wand-sparkles { display: none; }
+.p-no-clock #enchanted-clock { display: none; }
+.p-no-memories #memory-background { display: none; }
+.p-no-eyes #watching-eyes { display: none; }
+.p-no-ball #golden-winged-ball { display: none; }

@@ -1,0 +1,169 @@
+/* THE TERMINAL: first the crash, then a futuristic but broken terminal (scanlines, a faint glow,
+   colours slightly split, glitches but no shaking), then a clean wipe to the future interface. */
+
+#terminal-scene {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(111, 243, 255, 0.07), rgba(0, 0, 0, 0) 65%),
+    #02060a;
+}
+
+/* ---- 1. The crash --------------------------------------------------------------------------- */
+.kernel-panic {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;              /* new lines push the old ones up, like a real console */
+  padding: 10px 12px;
+  background: #000;
+  overflow: hidden;
+}
+.panic-text {
+  margin: 0;
+  font: clamp(10px, 1.45vh, 14px) / 1.35 ui-monospace, "DejaVu Sans Mono", "Liberation Mono", monospace;
+  color: #c8c8c8;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+/* While the machine is busy (a [wait] in kernel_panic.txt): a blinking console cursor. */
+.panic-text.is-waiting::after { content: "_"; animation: cursor-blinks 1s steps(2, start) infinite; }
+/* The screen tears: bands of it flash and vanish (no shaking), then it all goes dark. */
+.kernel-panic.is-tearing { animation: screen-tears 0.9s steps(6) forwards; }
+@keyframes screen-tears {
+  0%   { clip-path: inset(0 0 0 0); filter: none; }
+  20%  { clip-path: inset(10% 0 55% 0); filter: brightness(1.8); }
+  40%  { clip-path: inset(48% 0 20% 0); filter: hue-rotate(90deg) brightness(2); }
+  60%  { clip-path: inset(30% 0 40% 0); filter: brightness(2.5) contrast(2); }
+  80%  { clip-path: inset(49% 0 49% 0); }
+  100% { clip-path: inset(50% 0 50% 0); opacity: 0; }
+}
+.blackout { z-index: 30; background: #000; opacity: 0; transition: opacity 0.2s; }
+.blackout.is-dark { opacity: 1; }
+
+/* ---- 2. The terminal ------------------------------------------------------------------------- */
+/* Scanlines and a slow rolling band of brightness, over everything (not over the clean interface). */
+#terminal-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(111, 243, 255, 0) 0%, rgba(111, 243, 255, 0.05) 50%, rgba(111, 243, 255, 0) 100%) 0 0 / 100% 30% no-repeat,
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.35) 0 1px, transparent 1px 3px);
+  animation: band-rolls 7s linear infinite;
+}
+@keyframes band-rolls { from { background-position: 0 -30%, 0 0; } to { background-position: 0 130%, 0 0; } }
+#terminal-scene.is-clean::after { display: none; }
+
+.terminal {
+  position: relative;
+  width: min(92vw, 900px);
+  margin: clamp(24px, 9vh, 90px) auto 0;
+  font: clamp(13px, 1.9vh, 18px) / 1.7 ui-monospace, "DejaVu Sans Mono", "Liberation Mono", monospace;
+  color: #bff8ff;
+  /* Colours split slightly: a red ghost to the left, a cyan one to the right. */
+  text-shadow: -1.5px 0 rgba(255, 40, 80, 0.45), 1.5px 0 rgba(0, 255, 255, 0.45), 0 0 8px rgba(111, 243, 255, 0.55);
+  animation: terminal-wakes 0.7s steps(4) both;
+}
+@keyframes terminal-wakes { 0% { opacity: 0; } 25% { opacity: 0.6; } 50% { opacity: 0.1; } 100% { opacity: 1; } }
+
+.script { list-style: none; margin: 0; padding: 0; }
+.script li { min-height: 1.7em; }
+.script li:not(.is-typing):not(.is-typed) { display: none; }       /* not reached yet */
+.script .heading { font-size: 1.35em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #eaffff; }
+.script .red { color: #ff6b6b; }
+.script .green { color: var(--terminal-green); }
+.script .dim { color: rgba(191, 248, 255, 0.55); }
+.glitched { color: #ff4fd8; }           /* a character that stayed broken */
+.working { color: rgba(191, 248, 255, 0.7); white-space: pre; }   /* the progress bar of a line being worked on */
+.working.is-done { color: var(--terminal-green); }
+
+.cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: #bff8ff;
+  box-shadow: 0 0 8px rgba(111, 243, 255, 0.8);
+  animation: cursor-blinks 1s steps(2, start) infinite;
+}
+@keyframes cursor-blinks { to { visibility: hidden; } }
+
+/* Glitches while it types (glitch_typing.js turns these on for a fraction of a second). */
+.terminal.colours-split { text-shadow: -7px 0 rgba(255, 40, 80, 0.85), 7px 0 rgba(0, 255, 255, 0.85), 0 0 14px rgba(111, 243, 255, 0.9); }
+.terminal.flickers { opacity: 0.55; filter: brightness(1.8) contrast(1.4); }
+.interference {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--bar-top, 40%);
+  height: var(--bar-height, 4%);
+  z-index: 4;
+  pointer-events: none;
+  display: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 79, 216, 0.35) 0 3px, rgba(111, 243, 255, 0.4) 3px 7px, transparent 7px 13px),
+    rgba(4, 12, 18, 0.6);
+  mix-blend-mode: screen;
+}
+.interference.is-on { display: block; }
+
+/* ---- 3. The wipe and the clean future interface ------------------------------------------------- */
+.wipe {
+  z-index: 20;
+  background: linear-gradient(90deg, rgba(111, 243, 255, 0) 0%, rgba(220, 255, 255, 0.95) 48%, #ffffff 50%, rgba(220, 255, 255, 0.95) 52%, rgba(111, 243, 255, 0) 100%) -100% 0 / 50% 100% no-repeat;
+}
+.wipe.is-wiping { animation: wipe-crosses 0.9s cubic-bezier(0.6, 0, 0.3, 1) forwards; }
+@keyframes wipe-crosses { to { background-position: 200% 0; } }
+
+.welcome {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 50%, rgba(111, 243, 255, 0.08), rgba(0, 0, 0, 0) 60%), #04070b;
+}
+.welcome-title {
+  margin: 0;
+  font: 500 clamp(28px, 6vh, 56px) / 1.1 "Cinzel", Georgia, serif;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em;
+  text-transform: uppercase;
+  color: #eaffff;
+  text-shadow: 0 0 18px rgba(111, 243, 255, 0.7);
+  animation: welcome-rises 1.4s ease-out both;
+}
+.welcome-sub {
+  margin: 18px 0 0;
+  font: 500 clamp(12px, 1.8vh, 16px) / 1 "Cinzel", Georgia, serif;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(230, 200, 126, 0.85);
+  animation: welcome-rises 1.4s ease-out 0.8s both;
+}
+@keyframes welcome-rises { from { opacity: 0; translate: 0 12px; filter: blur(4px); } to { opacity: 1; translate: 0 0; filter: blur(0); } }
+.pulsing-stars i { font-style: normal; animation: star-pulses 1.2s ease-in-out infinite; }
+.pulsing-stars i:nth-child(2) { animation-delay: 0.2s; }
+.pulsing-stars i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes star-pulses { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+
+/* Before the letter: the words fly up and fade away. */
+.welcome.is-leaving p { animation: welcome-flies-up 1.3s cubic-bezier(0.55, 0, 0.75, 0.4) forwards; }
+.welcome.is-leaving .welcome-sub { animation-delay: 0.12s; }
+@keyframes welcome-flies-up {
+  from { opacity: 1; translate: 0 0; filter: blur(0); }
+  to   { opacity: 0; translate: 0 -45vh; filter: blur(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #terminal-scene::after, .terminal, .welcome-title, .welcome-sub, .pulsing-stars i, .kernel-panic.is-tearing { animation: none; }
+  .welcome.is-leaving p { animation: none; opacity: 0; }
+  .wipe.is-wiping { animation: none; }
+}

@@ -1,0 +1,109 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Letter videos</title>
+<!--
+  Pre-renders the letter for the letter chapter: for each paragraph, two videos with a black background
+  (the page shows them with "screen" blending, so black disappears into the paper):
+    write_N.mp4  the paragraph writing itself, played once;
+    loop_N.mp4   the finished paragraph with the colours flowing and the sparks flying,
+                 36 seconds that loop seamlessly (the colour animation is 36 s long, and every
+                 spark lasts 4, 4.5 or 6 s, which all fit into 36 s a whole number of times).
+  The colours in write_N end exactly where loop_N begins, so the switch is invisible.
+  The painting itself is in letter_painter.js (shared with tuner.html). Settings come from
+  letter_painter.js, overridden by settings.json if you saved one from the tuner.
+  After editing the letter or the settings, run it again: python tools/letter_video/save_videos.py render
+-->
+<style>
+  @font-face { font-family: "Grenze Gotisch"; src: url("/chapters/shared/fonts/grenze-gotisch.woff2") format("woff2"); font-weight: 400 900; }
+  body { background: #111; color: #ccc; font: 14px system-ui; }
+</style>
+<p id="status">Starting…</p>
+<script type="module">
+import { settings, loadDefaults, loadTexts, buildParagraphs, paintFrame, LOOP_SECONDS, LOOP_FPS } from "./letter_painter.js";
+const status = (text) => (document.getElementById("status").textContent = text);
+
+await loadDefaults();
+const paragraphs = await buildParagraphs(await loadTexts());
+const WRITING_FPS = settings.writingFps;
+
+// Raw pixels, sent 30 frames at a time (a background tab slows down turning the canvas into a
+// picture file but not this, and each request has a fixed delay, so fewer is faster).
+const waiting = new Map();   // video name -> frames not sent yet
+async function sendFrame(name, fps, surface) {
+  if (!waiting.has(name)) waiting.set(name, []);
+  waiting.get(name).push(surface.pen.getImageData(0, 0, surface.frame.width, surface.frame.height).data);
+  if (waiting.get(name).length >= 30) await flushFrames(name, fps, surface);
+}
+async function flushFrames(name, fps, surface) {
+  const frames = waiting.get(name) || [];
+  if (!frames.length) return;
+  waiting.set(name, []);
+  await fetch(`/frame/${name}/${fps}/${surface.frame.width}x${surface.frame.height}`, { method: "POST", body: new Blob(frames) });
+}
+
+// Videos already made can be skipped: add ?skip=write_1&skip=... to the address.
+const skip = new URLSearchParams(location.search).getAll("skip");
+const writingFrameCount = (p) => Math.ceil((p.writeEnd - p.start) * WRITING_FPS);
+const totalFrames = paragraphs.reduce((sum, p, i) => sum + (skip.includes(`write_${i + 1}`) ? 0 : writingFrameCount(p)), 0) + LOOP_SECONDS * LOOP_FPS * paragraphs.length;
+let framesDone = 0;
+const began = performance.now();
+// Shown here, and every 2 s printed by the helper too (for a render without a window).
+let lastReport = 0;
+function progress(what) {
+  const text = `${what} · ${framesDone} of ${totalFrames} frames (${Math.round((100 * framesDone) / totalFrames)}%) · ${Math.round((performance.now() - began) / 1000)} s`;
+  status(text);
+  if (performance.now() - lastReport > 2000) {
+    lastReport = performance.now();
+    fetch("/progress", { method: "POST", body: text }).catch(() => {});
+  }
+}
+
+// 1. The writing videos, one paragraph at a time.
+for (const [index, p] of paragraphs.entries()) {
+  const name = `write_${index + 1}`;
+  if (skip.includes(name)) continue;
+  const count = writingFrameCount(p);
+  for (let f = 0; f < count; f++) {
+    paintFrame(p, p.start + f / WRITING_FPS);
+    await sendFrame(name, WRITING_FPS, p.surface);
+    framesDone++;
+    if (f % 20 === 0) progress(`${name}: frame ${f + 1} of ${count}`);
+  }
+  await flushFrames(name, WRITING_FPS, p.surface);
+  await fetch(`/finish/${name}`, { method: "POST", body: "" });
+}
+
+// 2. The loops, all paragraphs together, so each moment's colours are worked out only once.
+for (let f = 0; f < LOOP_SECONDS * LOOP_FPS; f++) {
+  for (const [index, p] of paragraphs.entries()) {
+    paintFrame(p, p.writeEnd + f / LOOP_FPS);
+    await sendFrame(`loop_${index + 1}`, LOOP_FPS, p.surface);
+    framesDone++;
+  }
+  if (f % 10 === 0) progress(`loops: frame ${f + 1} of ${LOOP_SECONDS * LOOP_FPS}`);
+}
+for (const [index, p] of paragraphs.entries()) {
+  await flushFrames(`loop_${index + 1}`, LOOP_FPS, p.surface);
+  await fetch(`/finish/loop_${index + 1}`, { method: "POST", body: "" });
+}
+
+// What the page needs: each paragraph's size, when its video starts and ends, and where its
+// lines are (so the scroll can follow the writing).
+const timing = {
+  loopSeconds: LOOP_SECONDS,
+  paragraphs: paragraphs.map((p, index) => {
+    const lines = [];
+    for (const word of p.words) {
+      if (!lines[word.lineNumber]) lines[word.lineNumber] = { start: word.start, y: +(word.y - settings.fontSize - p.view.y).toFixed(1) };
+    }
+    return {
+      write: `write_${index + 1}.mp4`, loop: `loop_${index + 1}.mp4`,
+      width: +p.view.width.toFixed(1), height: +p.view.height.toFixed(1),
+      start: +p.start.toFixed(3), writeEnd: +p.writeEnd.toFixed(3), lines,
+    };
+  }),
+};
+await fetch("/timing", { method: "POST", body: JSON.stringify(timing) });
+status(`Done: ${framesDone} frames in ${Math.round((performance.now() - began) / 1000)} s`);
+window.renderDone = true;
+</script>

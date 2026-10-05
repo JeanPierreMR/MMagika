@@ -1,0 +1,13 @@
+{
+ "drawTime": 8,
+ "letterGap": 0.078,
+ "linePause": 0,
+ "bloomStart": 0.2,
+ "bloomTime": 1.9,
+ "sparkShare": 0.11,
+ "sparkSize": 0.95,
+ "sparkGlow": 0.45,
+ "sparkDistance": 0.8,
+ "sparksFadeIn": 2.5,
+ "pixelsPerUnit": 1
+}

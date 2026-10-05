@@ -19,11 +19,14 @@ Two honest limits of this approach:
      Cloudflare account (see README).
 """
 
+import logging
 import threading
 import time
 
 from django.conf import settings
 from django.http import HttpResponse
+
+logger = logging.getLogger(__name__)
 
 
 def find_visitor_ip_address(request):
@@ -63,6 +66,8 @@ class LimitRequestsPerVisitor:
             self.requests_this_minute[visitor] = count
 
         if count > limit:
+            if count == limit + 1:                  # log once per visitor per minute, not every refused request
+                logger.warning("Too many requests from %s: over %s this minute", visitor, limit)
             seconds_until_next_minute = 60 - int(time.time() % 60)
             return HttpResponse(
                 "Too many requests. Please slow down and try again in a minute.",

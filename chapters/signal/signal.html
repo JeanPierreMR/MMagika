@@ -1,0 +1,53 @@
+{% extends "shared/page.html" %}
+{% load static %}
+{% comment %}
+  CHAPTER 2 — THE SIGNAL. Start reading here for this chapter.
+
+  1. THE GATE: the page asks for the microphone, and won't go on until it's working.
+  2. THE MOCKINGJAY: the whole page listens. The picture sits in the middle; around it the sound is
+     drawn as moving geometry, with the machine's calculations written over it. No instructions:
+     the visitor has to know to whistle the call. It listens constantly.
+  3. When it hears the four-note call (at a normal pace: 2 to 6 seconds), the mockingjay sings it
+     back, everything turns gold, the page goes dark, and the next chapter opens (it begins with
+     the machine crashing: a kernel panic).
+
+  What's where:
+    images/mockingjay.png    THE PICTURE IN THE MIDDLE: a placeholder. Replace it with your artwork,
+                             same name (a square PNG with a transparent background works best).
+    signal.css               the gate, the page, the picture's size and glow
+    signal.js                the order of events above
+    listen_for_the_call.js   how the call is recognised (explained at the top of the file)
+    voice_geometry.js        the drawing and the calculations
+    bird_song.js             the call, sung back by a synthesized whistle (no recording)
+  The microphone is only allowed on this page (site_security/permissions_policy.py), and its sound
+  is analysed in the browser only: never recorded or sent.
+{% endcomment %}
+
+{% block title %}The signal{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'signal/signal.css' %}" nonce="{{ csp_nonce }}">
+{% endblock %}
+
+{% block body %}
+<main id="signal-scene">
+  <canvas id="voice-geometry" class="layer" aria-hidden="true"></canvas>
+  <img id="mockingjay" class="mockingjay" src="{% static 'signal/images/mockingjay.png' %}" alt="The mockingjay">
+
+  {# 1. The gate: nothing happens until the microphone is on. #}
+  <section id="microphone-gate" class="microphone-gate" aria-label="Microphone needed">
+    <button id="turn-on-microphone" class="microphone-button" type="button">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="17" y="6" width="14" height="24" rx="7" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M11 22a13 13 0 0 0 26 0M24 35v7M17 42h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>Enable microphone</span>
+    </button>
+    <p id="gate-message" class="gate-message" role="status" aria-live="polite"></p>
+  </section>
+
+  <div class="blackout layer" aria-hidden="true"></div>
+</main>
+
+<script type="module" src="{% static 'signal/signal.js' %}" nonce="{{ csp_nonce }}"></script>
+{% endblock %}

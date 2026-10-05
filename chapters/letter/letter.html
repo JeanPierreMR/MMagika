@@ -1,0 +1,56 @@
+{% extends "shared/page.html" %}
+{% load static %}
+{% comment %}
+  CHAPTER 4 — THE LETTER (the end). Start reading here for this chapter.
+
+  The visitor arrives from the terminal ("Welcome Doctor · Starting letter").
+  First, in black, the scroll's outline draws itself in blue, then it's black again and the page
+  fades in                                                       (blueprint_intro/)
+  What they see then, back to front:
+    1. a night sky of slowly pulsing stars                      (night_sky/)
+    2. the clean future interface: a holographic frame whose lines draw themselves in,
+       with small status readouts                                (future_frame.css, below)
+    3. the dark scroll: its seal glows and bursts, the sheet unrolls, and the Dreamers' letter
+       writes itself in gold                                      (scroll_and_wax_seal/)
+    4. now and then, the connection seems to fail for a moment: half the screen goes dark with
+       green lines, or the picture breaks into grain             (connection_glitches.js)
+  letter.js plays the intro, then starts the frame, the scroll and the glitches.
+{% endcomment %}
+
+{% block title %}A letter for the Dreamers{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'letter/future_frame.css' %}" nonce="{{ csp_nonce }}">
+<link rel="stylesheet" href="{% static 'letter/connection_glitches.css' %}" nonce="{{ csp_nonce }}">
+{% endblock %}
+
+{% block body %}
+  {% include "letter/night_sky/night_sky.html" %}
+
+  {# The future interface around everything: four corner brackets, two lines and some readouts. #}
+  <div id="future-frame" class="layer" aria-hidden="true">
+    <svg class="frame-lines" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+      <path class="frame-line" d="M30 120 V30 H220"/>
+      <path class="frame-line" d="M780 30 H970 V120"/>
+      <path class="frame-line" d="M970 880 V970 H780"/>
+      <path class="frame-line" d="M220 970 H30 V880"/>
+      <path class="frame-line faint" d="M260 30 H740"/>
+      <path class="frame-line faint" d="M260 970 H740"/>
+    </svg>
+    <p class="readout top-left"><span class="status-word">CHANNEL SECURE</span> <span class="blink">●</span></p>
+    <p class="readout top-right">DREAMERS · REFUGE NETWORK</p>
+    <p class="readout bottom-left">HOLO-V13 · LINK STABLE</p>
+    <p class="readout bottom-right">TRANSMISSION 01/01</p>
+  </div>
+
+  {% include "letter/scroll_and_wax_seal/scroll_and_wax_seal.html" %}
+
+  {# The connection failing for a moment (shown and hidden by connection_glitches.js). #}
+  <div class="glitch-half-dark" hidden aria-hidden="true"></div>
+  <div class="glitch-grain" hidden aria-hidden="true"></div>
+  <div class="glitch-sweep" hidden aria-hidden="true"></div>
+
+  {% include "letter/blueprint_intro/blueprint_intro.html" %}
+
+  <script type="module" src="{% static 'letter/letter.js' %}" nonce="{{ csp_nonce }}"></script>
+{% endblock %}

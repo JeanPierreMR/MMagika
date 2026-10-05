@@ -1,56 +1,59 @@
-# MMagika
+# The Dreamers
 
-A sparse night sky of pulsing stars. A single pair of glowing purple-green eyes appears now and then in the dark corners, with a faint glint of red fangs beneath. In the middle lies a dark rolled-up scroll with a soft purple glow, tied with ribbons and sealed with dark red wax stamped **MD** in gold. A golden winged ball flutters about, always keeping away from your mouse.
+A short story told in four chapters, one web page each. You can't skip ahead: the site remembers how far you've got.
 
-Move the mouse and sparkles follow it. **Hold the click** and you draw a glowing, glittering green line. Draw the right shape and something happens:
+| Chapter | Address | What happens |
+|---|---|---|
+| 1. **The vault** | `/vault` | An old, rusty vault door in a concrete wall. Dust drifts in a flickering light, and a red handprint is smeared across it. Twelve rotating dials (digits and letters) hold the combination. The right one makes the bolts slide back and the wheel spin; the doorway glows with light from inside, and the whole view burns out white, like a camera pointed at the sun. |
+| 2. **The signal** | `/signal` | First, the page asks for the microphone and won't go on without it. Then the whole page listens: a picture in the middle, the sound drawn around it as moving geometry, with the machine's calculations written over it. No instructions. When it hears the mockingjay's four notes (at a normal pace, 2 to 6 seconds), the bird sings them back, and everything goes dark. |
+| 3. **The terminal** | `/terminal` | The machine crashes: a Linux kernel panic, stopping now and then as if the machine were busy, the screen tears, one second of black. Then a glitched futuristic terminal types the EverAfter mission file, Kids Next Door style, glitching as it goes; some lines show a progress bar while the machine works on them. A bright wipe: "Welcome Doctor · Starting letter", which flies up and fades. |
+| 4. **The letter** | `/letter` | A clean holographic frame and a night sky. The dark scroll's seal bursts, it unrolls, and the Dreamers' letter writes itself in gold. Now and then the connection seems to fail: half the screen goes dark with green lines, or the picture breaks into grain. |
 
-| Draw (holding the click) | What happens |
-|---|---|
-| **A cross** (a `+` or a `†`, as two lines or as a whole silhouette) or **a triangle** | **The healing spell.** The stars turn into coloured crosses. Memories of medicine flood the screen one after another, each shown once, oldest first (House M.D.-opening style), then settle into the background, smaller, drifting in and out. The seal glows and bursts into flying wax and embers, the sheet unrolls out of the roll, and once it is fully open the letter writes itself in glowing gothic gold with colours flowing through it and sparks flying off (the effect from `decree.html`). The golden ball stops fleeing and flies freely. |
-| **A spiral** | A translucent swirling purple portal opens where you drew it. |
-| **A zigzag** (or a lightning bolt) | The screen flashes and jolts. |
-
-A violet **enchanted clock** (Mayan numerals, rings of runes, today's date, the real time) follows your mouse: its details stream after it like a ribbon, and its circles and triangles fade and redraw themselves wherever the mouse comes to rest (a click summons them at once). Space pauses its turning ornaments; Escape recentres it. A little pixel cat also chases your mouse around.
+`/` sends you to the chapter you're up to.
 
 ---
 
 ## Where to start reading
 
-The code is organised around **what you see on the page**. Each visible part has one folder holding its HTML, CSS and JavaScript together.
+The code is organised around **what you see**. Each chapter has one folder (`chapters/<chapter>/`) holding its HTML, CSS and JavaScript together. Each chapter's HTML file starts with a comment explaining what happens and what's where; start there.
 
-1. **[magic_page/page.html](magic_page/page.html)** lists every part, from the back of the screen to the front.
-2. **[magic_page/parts/spellbook/spellbook.js](magic_page/parts/spellbook/spellbook.js)** decides which drawing casts which spell.
-3. **[magic_page/parts/healing_spell/healing_spell.js](magic_page/parts/healing_spell/healing_spell.js)** is the main story, step by step.
+- **[chapters/progress.py](chapters/progress.py)**: the chapters in order, and which ones a visitor has finished.
+- **[chapters/views.py](chapters/views.py)**: the pages, plus the few messages a page sends to the site ("try this combination", "this chapter is done").
+- **[chapters/shared/](chapters/shared/)**: things every chapter uses:
+  - `page.html`, the page frame each chapter extends;
+  - colours, fonts and sounds (all synthesized, no audio files);
+  - the "looks random but isn't" helper;
+  - `tell_the_site.js`.
 
-Each JavaScript file starts by answering: *What starts it? What does it use? What does it do? What changes?*
+Each JavaScript file starts by answering: *What starts it? What does it do? What changes?*
 
-### The parts (`magic_page/parts/`)
-
-| Folder | What it is |
+| Folder | What's in it |
 |---|---|
-| `whole_page/` | Colours (several purples) and basic layout shared by everything |
-| `night_sky/` | The pulsing stars; later turns them into coloured crosses |
-| `enchanted_clock/` | The violet clock that follows the mouse (ported from Arcane Hours, "teleport" version) |
-| `watching_eyes/` | Dark corners, and one pair of eyes that slowly appears, follows the mouse, blinks lazily and vanishes |
-| `wand/` | Sparkles, plus the glittering green line while you hold the click (it stays until 1 second after you let go) |
-| `spellbook/` | Reads what shape you drew (`shape_reader.js`) and casts the matching spell |
-| `healing_spell/` | The main story, in order |
-| `medical_history/` | The pictures: the flood of memories, then the quiet background (credits in `image_credits.md`) |
-| `golden_winged_ball/` | The golden ball: shy of the mouse at first, free once the scroll opens |
-| `scroll_and_wax_seal/` | The black scroll and melted-wax seal. **The letter's text is in `letter.html`**; `letter_in_gold.js` draws it in gold |
-| `swirling_portal/`, `lightning_flash/` | The spiral and zigzag spells |
-| `pixel_cat/` | Loads the borrowed pixel cat |
+| `chapters/vault/` | The door and the scene (`vault.css`), the dials (`combination_dials.js`), the opening (`vault.js`), and photo textures (CC0, credits in `image_credits.md`) |
+| `chapters/signal/` | The microphone gate and the listening page. **The picture in the middle is `images/mockingjay.png`** (a placeholder: replace it, same name). How the call is recognised is explained at the top of `listen_for_the_call.js`; the drawing is `voice_geometry.js`; the bird's song is `bird_song.js` |
+| `chapters/terminal/` | The crash (`kernel_panic.txt`; a `[wait 1500]` line pauses it), the script itself in `terminal.html` (edit the lines freely; `data-pause` and `data-working` set the pauses and progress bars), and the typing and glitches (`glitch_typing.js`) |
+| `chapters/letter/` | The future frame, the night sky, the scroll, and the connection glitches (`connection_glitches.js`). **The letter's text is in `scroll_and_wax_seal/letter.html`**, with `[pausa]`, `[pausa larga]` and `[silencio]` where the pen stops; it's played from pre-rendered videos (see below) |
 
 ### Everything else
 
 | Folder / file | What it is |
 |---|---|
-| `site_security/` | **All** the safety rules in one place: secret key, HTTPS, which scripts the browser may run, and the per-visitor request limit. `tests.py` checks them. |
-| `site_settings/` | Django's wiring: which web address shows what, where files live |
-| `magic_page/views.py` | The two things the site can show: the page, and `/healthz` ("I'm alive") for Render |
-| `magic_page/vendor/` | Code borrowed from other people, unchanged, with licences ([README](magic_page/vendor/README.md)) |
+| `site_security/` | **All** the safety rules in one place: secret key, HTTPS, which scripts the browser may run, the request limit, the vault's combination and guess limit, sessions, forged-request protection, and which page may use the microphone. `tests.py` checks it all. |
+| `site_settings/` | Django's wiring: which web address shows what (`urls.py`), where files live |
+| `tools/letter_video/` | The **tuner** (try the letter's animation settings with a live preview) and the **renderer** that turns the letter into videos. See its README. |
+| `tools/colour_field/` | How the colours flowing inside the letter are made |
 | `Dockerfile`, `render.yaml` | How Render builds and runs the site |
 | `docs/scaling.html` | How this could grow to 20 million users, Render vs AWS |
+
+### Changing the letter
+
+The letter is pre-rendered, so the browser only plays videos. After editing `letter.html`, or the animation settings in the tuner, render it again with one command (needs ffmpeg and Firefox or Chrome; it takes a while, about half an hour for the whole letter):
+
+```bash
+python3 tools/letter_video/save_videos.py render
+```
+
+The old videos stay in place until the new ones are all finished. More in [tools/letter_video/README.md](tools/letter_video/README.md).
 
 ---
 
@@ -63,23 +66,31 @@ DJANGO_DEBUG=1 python manage.py runserver     # open http://127.0.0.1:8000
 python manage.py test                         # the automatic checks
 ```
 
+The combination on your computer is `12MD20262020`.
+
+While you're working on one chapter, add `?skip` to its address (e.g. `/letter?skip`) to jump straight to it. Add `?profile` to measure what makes a page slow. Both work only in debug mode.
+
 Or run exactly what Render runs:
 
 ```bash
-docker build -t mmagika .
-docker run --rm -p 10000:10000 -e DJANGO_SECRET_KEY=anything-for-local-testing mmagika   # open http://localhost:10000
+docker build -t dreamers .
+docker run --rm -p 10000:10000 -e DJANGO_SECRET_KEY=anything -e VAULT_COMBINATION=12MD20262020 dreamers   # open http://localhost:10000
 ```
 
 ## Put it on Render
 
 1. Push this repository to GitHub.
-2. In Render: **New → Blueprint** and pick the repository. Render reads `render.yaml`, builds the `Dockerfile`, creates a secret key, and gives you an address like `mmagika.onrender.com`.
+2. In Render: **New → Blueprint** and pick the repository. Render reads `render.yaml` and builds the `Dockerfile`. It creates a secret key, and **asks you for `VAULT_COMBINATION`** (the vault's combination; it's only ever checked on the server). You get an address like `dreamers.onrender.com`.
 3. Using your own domain? Set `DJANGO_ALLOWED_HOSTS=yourdomain.com` in Render's environment settings.
 
-**After the first deploy, check one thing.** The request limit (`site_security/limit_requests_per_visitor.py`) reads the visitor's address from the first entry in the `X-Forwarded-For` header. Render's docs don't spell out how Render sets that header. If every visitor turns out to share one address, the limit would apply to everyone together. Open the page from two different networks (for example Wi-Fi and phone data); if the second one gets "Too many requests" while the first is busy, adjust `find_visitor_ip_address` in that file.
+**After the first deploy, check one thing.** The request limits read the visitor's address from the first entry in the `X-Forwarded-For` header. Open the page from two different networks (for example Wi-Fi and phone data). If the second one gets "Too many requests" while the first is busy, adjust `find_visitor_ip_address` in `site_security/limit_requests_per_visitor.py`.
 
-**Want real flood protection?** Put the site behind your own free Cloudflare account and add one rate-limiting rule. The in-app limit is a backstop, not a shield.
+**Want real flood protection?** Put the site behind your own free Cloudflare account and add one rate-limiting rule. The in-app limits are a backstop, not a shield.
+
+## Microphone and privacy
+
+Only `/signal` may use the microphone. It is enforced by a `Permissions-Policy` header, and the browser asks first. The sound is analysed live in the browser to hear the notes; it is never recorded or sent anywhere. The microphone needs HTTPS (Render provides it) or `localhost`.
 
 ## Browsers
 
-Built for current Chrome, Firefox and Safari. Checked in Chrome and Firefox. Safari still needs a check on an Apple device, but the code avoids the features Safari is known to lack. People who turn on "reduce motion" get a calmer page: no sparkles, no pixel cat, no flying or shaking.
+Built for current Chrome, Firefox and Safari. Checked in Chrome and Firefox; Safari still needs a check on an Apple device. People who turn on "reduce motion" get a calm version of every chapter.

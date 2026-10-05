@@ -1,8 +1,0 @@
-{% load static %}
-{% comment %}
-  THE PIXEL CAT: a tiny cat that chases the mouse, falls asleep when it stops,
-  and scratches when bored. It is the borrowed oneko.js (see magic_page/vendor/README.md);
-  "data-cat" tells it where its picture (a sheet of little cat drawings) is.
-  It stays hidden for people who prefer less motion.
-{% endcomment %}
-<script src="{% static 'vendor/oneko.js' %}" data-cat="{% static 'vendor/oneko.gif' %}" nonce="{{ csp_nonce }}"></script>

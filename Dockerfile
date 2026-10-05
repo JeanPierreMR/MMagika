@@ -22,8 +22,10 @@ COPY . .
 
 # Gather every picture, style and script into one folder for serving.
 # The .html files are left out so the page templates are never public.
-# (A throwaway secret key is enough for this step; the real one is only given when the site runs.)
-RUN DJANGO_SECRET_KEY=only-used-while-building python manage.py collectstatic --noinput --ignore "*.html"
+# (Throwaway values are enough for this step; the real secret key and vault combination are only
+# given when the site runs.)
+RUN DJANGO_SECRET_KEY=only-used-while-building VAULT_COMBINATION=only-used-while-building \
+    python manage.py collectstatic --noinput --ignore "*.html"
 
 # Don't run as the all-powerful "root" user: if something went wrong, it can do less damage.
 RUN useradd --create-home magician
