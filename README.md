@@ -5,7 +5,7 @@ A short story told in four chapters, one web page each. You can't skip ahead: th
 | Chapter | Address | What happens |
 |---|---|---|
 | 1. **The vault** | `/vault` | An old, rusty vault door in a concrete wall. Dust drifts in a flickering light, and a red handprint is smeared across it. Twelve rotating dials (digits and letters) hold the combination. The right one makes the bolts slide back and the wheel spin; the doorway glows with light from inside, and the whole view burns out white, like a camera pointed at the sun. |
-| 2. **The signal** | `/signal` | First, the page asks for the microphone and won't go on without it. Then the whole page listens: a picture in the middle, the sound drawn around it as moving geometry, with the machine's calculations written over it. No instructions. When it hears the mockingjay's four notes (at a normal pace, 2 to 6 seconds), the bird sings them back, and everything goes dark. |
+| 2. **The signal** | `/signal` | First, the page asks for the microphone and won't go on without it. Then the whole page listens: a picture in the middle, the sound drawn around it as moving geometry, with the machine's calculations written over it. No instructions. When it hears the mockingjay's four notes, whistled or hummed (at a normal pace, 1.5 to 7 seconds), the bird sings them back, and everything goes dark. Other notes are softly mirrored back by the bird. |
 | 3. **The terminal** | `/terminal` | The machine crashes: a Linux kernel panic, stopping now and then as if the machine were busy, the screen tears, one second of black. Then a glitched futuristic terminal types the EverAfter mission file, Kids Next Door style, glitching as it goes; some lines show a progress bar while the machine works on them. A bright wipe: "Welcome Doctor · Starting letter", which flies up and fades. |
 | 4. **The letter** | `/letter` | A clean holographic frame and a night sky. The dark scroll's seal bursts, it unrolls, and the Dreamers' letter writes itself in gold. Now and then the connection seems to fail: half the screen goes dark with green lines, or the picture breaks into grain. |
 
@@ -21,7 +21,8 @@ The code is organised around **what you see**. Each chapter has one folder (`cha
 - **[chapters/views.py](chapters/views.py)**: the pages, plus the few messages a page sends to the site ("try this combination", "this chapter is done").
 - **[chapters/shared/](chapters/shared/)**: things every chapter uses:
   - `page.html`, the page frame each chapter extends;
-  - colours, fonts and sounds (all synthesized, no audio files);
+  - colours and fonts;
+  - **the sound orchestra** (`sound_orchestra/`): every sound and song (see *Sounds and songs* below);
   - the "looks random but isn't" helper;
   - `tell_the_site.js`.
 
@@ -40,9 +41,11 @@ Each JavaScript file starts by answering: *What starts it? What does it do? What
 |---|---|
 | `site_security/` | **All** the safety rules in one place: secret key, HTTPS, which scripts the browser may run, the request limit, the vault's combination and guess limit, sessions, forged-request protection, and which page may use the microphone. `tests.py` checks it all. |
 | `site_settings/` | Django's wiring: which web address shows what (`urls.py`), where files live |
+| `tools/sound_lab/` | The **sound lab**: play every sound and song, try the mockingjay, test the microphone, check the recogniser's rules |
 | `tools/letter_video/` | The **tuner** (try the letter's animation settings with a live preview) and the **renderer** that turns the letter into videos. See its README. |
 | `tools/colour_field/` | How the colours flowing inside the letter are made |
 | `Dockerfile`, `render.yaml` | How Render builds and runs the site |
+| `compose.dev.yaml` | For your computer only: the site with live reloading, plus the sound lab (see below) |
 | `docs/scaling.html` | How this could grow to 20 million users, Render vs AWS |
 
 ### Changing the letter
@@ -70,7 +73,18 @@ The combination on your computer is `12MD20262020`.
 
 While you're working on one chapter, add `?skip` to its address (e.g. `/letter?skip`) to jump straight to it. Add `?profile` to measure what makes a page slow. Both work only in debug mode.
 
-Or run exactly what Render runs:
+### With Docker, reloading as you edit
+
+Everything at once, without installing Python: the site reloads as you save, and the sound lab and letter tuner are served alongside it. Your project folder is mounted into the containers, so nothing needs rebuilding after an edit (only after changing `requirements.txt`).
+
+```bash
+docker compose -f compose.dev.yaml up        # Ctrl+C to stop
+```
+
+- the site: http://localhost:8000 (e.g. http://localhost:8000/letter?skip)
+- the sound lab: http://localhost:8004/tools/sound_lab/sound_lab.html
+
+### Run exactly what Render runs
 
 ```bash
 docker build -t dreamers .
@@ -86,6 +100,25 @@ docker run --rm -p 10000:10000 -e DJANGO_SECRET_KEY=anything -e VAULT_COMBINATIO
 **After the first deploy, check one thing.** The request limits read the visitor's address from the first entry in the `X-Forwarded-For` header. Open the page from two different networks (for example Wi-Fi and phone data). If the second one gets "Too many requests" while the first is busy, adjust `find_visitor_ip_address` in `site_security/limit_requests_per_visitor.py`.
 
 **Want real flood protection?** Put the site behind your own free Cloudflare account and add one rate-limiting rule. The in-app limits are a backstop, not a shield.
+
+## Sounds and songs
+
+All sounds live in **`chapters/shared/sound_orchestra/`**, and **`sound_book.js` is the one file to edit**: every sound and song by name, with its volume, fades and where it plays. The chapters only say `cue("its name")`.
+
+| Chapter | What you hear |
+|---|---|
+| Vault | a low wind in the empty room; dial ticks; a muffled clank when wrong; on opening, bolts, a deep swell and a bright shimmer fading into the white |
+| Signal | a forest at dawn once the microphone is on; the mockingjay; a soft "not quite" |
+| Terminal | the machine's hum during the panic, static, keystrokes, a soft glassy chord for "Welcome Doctor" |
+| Letter | angels singing, fading in with the page; a sparkle as the seal bursts; the choir dips when the connection fails |
+
+**Every sound is synthesized for now** (placeholders, in `synth_recipes.js`). To use a real recording instead, put a CC0 file in `sound_orchestra/audio/` and set the cue's `file` in `sound_book.js` (e.g. `file: "audio/forest.ogg"`). `audio/README.md` lists what to look for, with CC0-filtered search links, and a place for credits.
+
+Browsers only allow sound after the visitor has touched the page. The terminal and the letter open by themselves, so if a browser holds their sound back, it fades in at the visitor's first tap, click, scroll or key; nothing on screen asks for it.
+
+**The mockingjay** accepts the call whistled or hummed, in any key, with each jump up to 2.5 semitones off, taking 1.5 to 7 seconds (constants at the top of `chapters/signal/listen_for_the_call.js`). If someone sings four other notes and pauses, the bird softly whistles them back, then a quiet "not quite" (at most once every 5 seconds). The bird's voice is set by the constants at the top of `bird_song.js`.
+
+**Try sounds without walking through the story** in the sound lab (`tools/sound_lab/`): play every cue, change volumes and fades live ("Copy settings" gives you the numbers to paste back), make the bird sing or mirror any notes, hum into the microphone to see what the recogniser hears, and run its self-check. Open it with `docker compose -f compose.dev.yaml up`, or `python3 -m http.server 8004` in the project folder.
 
 ## Microphone and privacy
 

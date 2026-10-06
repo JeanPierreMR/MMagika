@@ -12,6 +12,7 @@
 // How often, how long, which halves: the numbers just below.
 
 import { makeRandom, pickOneOf } from "../shared/looks_random.js";
+import { cue, duck } from "../shared/sound_orchestra/orchestra.js";
 
 const GLITCH_EVERY = [5000, 13000];     // ms between glitches (somewhere in this range)
 const HALF_DARK_FOR = [180, 520];       // ms
@@ -64,6 +65,8 @@ export function startConnectionGlitches() {
 
   async function now() {
     status.textContent = "SIGNAL DEGRADED";
+    duck("letter.choir", 0.35, 0.8);              // the choir dips with the signal
+    cue("letter.glitch");
     const first = pickOneOf(Object.keys(GLITCHES), random);
     const happening = [GLITCHES[first]()];
     if (random() < 0.45) happening.push(GLITCHES[pickOneOf(Object.keys(GLITCHES).filter((g) => g !== first), random)]());

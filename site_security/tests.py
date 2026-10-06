@@ -211,3 +211,24 @@ class TheSecretKey(SimpleTestCase):
 
     def test_your_computer_gets_a_harmless_development_key(self):
         self.assertIn("never-use-in-production", read_secret_key({}))
+
+
+class TheSoundBook(SimpleTestCase):
+    """Every sound a chapter asks for exists in chapters/shared/sound_orchestra/sound_book.js."""
+    def test_every_cue_used_by_a_chapter_is_in_the_sound_book(self):
+        from pathlib import Path
+        chapters = Path(__file__).resolve().parent.parent / "chapters"
+        book = (chapters / "shared" / "sound_orchestra" / "sound_book.js").read_text()
+        listed = set(re.findall(r'^\s*"([a-z]+\.[a-z_]+)":', book, re.MULTILINE))
+        used = set()
+        for script in chapters.rglob("*.js"):
+            used |= set(re.findall(r'(?:cue|stopCue|duck)\("([a-z]+\.[a-z_]+)"', script.read_text()))
+        self.assertTrue(used, "no cues found")
+        self.assertEqual(used - listed, set(), "cues used but missing from sound_book.js")
+
+    def test_every_synth_named_in_the_sound_book_exists(self):
+        from pathlib import Path
+        folder = Path(__file__).resolve().parent.parent / "chapters" / "shared" / "sound_orchestra"
+        named = set(re.findall(r'synth: "(\w+)"', (folder / "sound_book.js").read_text()))
+        made = set(re.findall(r"^export function (\w+)\(", (folder / "synth_recipes.js").read_text(), re.MULTILINE))
+        self.assertEqual(named - made, set(), "synth recipes named in sound_book.js but missing")

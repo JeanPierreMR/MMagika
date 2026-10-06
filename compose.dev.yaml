@@ -1,0 +1,27 @@
+# FOR YOUR COMPUTER ONLY: the site with live reloading, plus the sound lab and the letter tuner.
+# It reuses the real Dockerfile and changes nothing in the code. Your project folder is mounted into
+# the container, so edits show up straight away (reload the page).
+#
+#   docker compose -f compose.dev.yaml up
+#
+#   the site        http://localhost:8000          (add ?skip to jump to a chapter: /letter?skip)
+#   the sound lab   http://localhost:8004/tools/sound_lab/sound_lab.html
+#   letter tuner    http://localhost:8004/tools/letter_video/tuner.html   (preview only; saving needs save_videos.py)
+services:
+  site:
+    build: .
+    volumes:
+      - .:/app                       # your files, live
+    environment:
+      DJANGO_PRODUCTION: "0"         # the image is built for production; switch that off here
+      DJANGO_DEBUG: "1"              # reloads on every change, ?skip works
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+  lab:
+    build: .
+    volumes:
+      - .:/app
+    command: python -m http.server 8004 --directory /app
+    ports:
+      - "8004:8004"

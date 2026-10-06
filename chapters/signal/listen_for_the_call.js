@@ -1,9 +1,12 @@
 // LISTENING FOR THE CALL — hears the visitor through the microphone, all the time, and notices the
-// moment they whistle (or hum) the mockingjay's four notes.
+// moment they whistle or HUM the mockingjay's four notes. When they sing four notes that aren't the
+// call, it says so too, so the bird can mirror them back.
 //
 // What starts it:  signal.js, once the microphone is on. It keeps listening until the call is heard.
-// What it gives back: "ears" (the sound, for the drawing), and every ~33 ms a report of what it
-//   worked out (onFrame), which the drawing shows as its "calculations". onHeard() once the call is right.
+// What it gives back: "ears" (the sound, for the drawing), pauseFor(ms) (stop listening for a moment,
+//   e.g. while the bird sings, so it doesn't hear itself), and every ~33 ms a report of what it worked
+//   out (onFrame), which the drawing shows. onHeard() once the call is right; onMirror(notes) when the
+//   visitor sang four notes that weren't the call.
 // Privacy: the sound is only analysed here, in the browser, as it comes in. Nothing is recorded
 // or sent anywhere.
 //
@@ -12,30 +15,39 @@
 //    and asks "after how many samples does this wave repeat itself?". For every possible delay τ
 //    it measures how alike the sound is to itself shifted by τ (normalised autocorrelation:
 //    r(τ) = 2·Σ x[n]·x[n+τ] / Σ (x[n]² + x[n+τ]²), which is 1 for a perfect repeat). The first delay
-//    where r(τ) peaks above 0.82 is one wave; the pitch is sampleRate ÷ τ (refined between samples
+//    where r(τ) peaks above CLARITY is one wave; the pitch is sampleRate ÷ τ (refined between samples
 //    with a parabola). Delays cover 70–3500 Hz: from a low hum to a high whistle.
 // 2. NOTES. Each pitch becomes a number of semitones (12·log2(f/440)). While the pitch stays within
 //    SAME_NOTE of where it started, it's the same note. A note counts once it has lasted
-//    SHORTEST_NOTE, and ends when the pitch moves away or goes quiet. A short wobble or a breath
-//    in the middle of a note (a gap under MERGE_GAP at the same pitch) doesn't split it in two.
+//    SHORTEST_NOTE, and ends when the pitch moves away or goes quiet. A tiny dropout in the middle
+//    of a note (under MERGE_GAP, same pitch) doesn't split it. A hum often fools the pitch-finder by
+//    exactly an octave for a moment; a jump of about ±12 semitones inside a note is ignored.
 // 3. SHAPE. Each time a note ends, it looks at the last four notes in a row and works out the three
-//    jumps between them, in semitones. The call's jumps are +3, −1, −7 (G → B♭ → A → down to D). Each jump
-//    must be within TOLERANCE of those. Only the jumps matter, not the notes themselves, so any key
-//    works, high or low.
+//    jumps between them, in semitones. The call's jumps are +3, −1, −7 (G → B♭ → A → down to D). Each
+//    jump must be within TOLERANCE of those. Only the jumps matter, not the notes themselves, so any
+//    key works, high or low, hummed or whistled.
 // 4. RHYTHM. From the start of the first note to the end of the fourth must take between
-//    SHORTEST_CALL and LONGEST_CALL seconds (2 to 6): a normal pace, not rushed, not dragged out.
-// 5. It never stops listening: it keeps the last few notes and checks again every time one ends,
-//    so the call is recognised whenever it comes, however much noise or whistling came before it.
+//    SHORTEST_CALL and LONGEST_CALL seconds: a normal pace, not rushed, not dragged out.
+// 5. It never stops listening: it keeps the last few notes and checks again every time one ends.
+// 6. MIRRORING. A "phrase" is notes sung with short gaps between them. When a phrase of at least four
+//    notes ends (PHRASE_END seconds of quiet) and it wasn't the call, onMirror gets its last four
+//    notes — at most once every MIRROR_COOLDOWN seconds, so it stays gentle.
 
 import { THE_CALL } from "./bird_song.js";
 
-const SAME_NOTE = 0.8;            // semitones: closer than this is still the same note
-const SHORTEST_NOTE = 0.1;        // seconds a pitch must hold to count as a note
-const MERGE_GAP = 0.18;           // seconds: a gap shorter than this, at the same pitch, is one note
-const TOLERANCE = 1.6;            // semitones each jump may be off by
-const SHORTEST_CALL = 2;          // seconds, whole call
-const LONGEST_CALL = 6;
-const QUIETEST = 0.012;           // below this loudness (RMS), it's silence
+// How forgiving it is. Bigger numbers = easier.
+const CLARITY = 0.7;              // how clearly a sound must repeat to count as a pitch (a hum is breathy)
+const SAME_NOTE = 0.8;            // semitones: closer than this is still the same note. Keep it under 1:
+                                  //   the call has a one-semitone step (B♭ → A) that must split two notes.
+const SHORTEST_NOTE = 0.12;       // seconds a pitch must hold to count as a note
+const MERGE_GAP = 0.1;            // seconds: a dropout shorter than this, at the same pitch, is one note
+const OCTAVE_SLIP = 0.7;          // semitones around ±12 treated as the pitch-finder slipping an octave
+const TOLERANCE = 2.5;            // semitones each jump may be off by
+const SHORTEST_CALL = 1.5;        // seconds, whole call
+const LONGEST_CALL = 7;
+const QUIETEST = 0.008;           // below this loudness (RMS), it's silence
+const PHRASE_END = 1.1;           // seconds of quiet that end a phrase (then a wrong phrase is mirrored)
+const MIRROR_COOLDOWN = 5;        // seconds: the bird mirrors at most this often
 
 export const semitonesOf = (pitch) => 12 * Math.log2(pitch / 440);
 // The call's shape: the jumps between its notes, in semitones (+3, −1, −7).
@@ -63,7 +75,7 @@ export function findPitch(samples, sampleRate) {
     curve[lag] = both ? (2 * sum) / both : 0;
   }
   for (let lag = minLag + 1; lag <= maxLag; lag++) {
-    if (curve[lag] > 0.82 && curve[lag] >= curve[lag - 1] && curve[lag] >= curve[lag + 1]) {
+    if (curve[lag] > CLARITY && curve[lag] >= curve[lag - 1] && curve[lag] >= curve[lag + 1]) {
       const [a, b, c] = [curve[lag - 1], curve[lag], curve[lag + 1]];
       const shift = (a - c) / (2 * (a - 2 * b + c)) || 0;
       return { pitch: sampleRate / (lag + shift), clarity: b, loudness, curve };
@@ -80,64 +92,124 @@ export function compareWithTheCall(four) {
   return { jumps, worstJump, span, isTheCall: worstJump <= TOLERANCE && span >= SHORTEST_CALL && span <= LONGEST_CALL };
 }
 
-export function startListening(audio, stream, { onFrame, onHeard }) {
-  const microphone = audio.createMediaStreamSource(stream);
-  const ears = audio.createAnalyser();
-  ears.fftSize = 2048;
-  microphone.connect(ears);
-
-  const samples = new Float32Array(ears.fftSize);
+// Steps 2 to 6, without the microphone: feed it, moment by moment, a time (seconds) and the pitch heard
+// then (in semitones, or null for quiet). It calls onHeard() once the call is sung, and onMirror(four
+// notes) when a wrong phrase ends. Kept separate so it can be tested with made-up notes (sound lab).
+export function makeNoteTracker({ onHeard, onMirror = () => {} }) {
   const notes = [];                 // finished notes: { semitone, start, end }
+  let phrase = [];                  // the notes of the phrase being sung
+  let phraseDone = false;
   let current = null;               // the note being sung right now
   let lastCheck = null;             // the latest comparison, for the drawing
-  let listening = true;
+  let lastMirrorAt = -Infinity;
+  let deafUntil = -Infinity;
+  let finished = false;
 
   function endCurrentNote() {
     if (!current || current.end - current.start < SHORTEST_NOTE) { current = null; return; }
     const previous = notes[notes.length - 1];
     if (previous && current.start - previous.end < MERGE_GAP && Math.abs(current.semitone - previous.semitone) < SAME_NOTE) {
-      previous.end = current.end;                                   // a breath in the middle: same note
+      previous.end = current.end;                                   // a dropout in the middle: same note
     } else {
-      notes.push({ semitone: current.semitone, start: current.start, end: current.end });
+      const note = { semitone: current.semitone, start: current.start, end: current.end };
+      if (phrase.length && note.start - phrase[phrase.length - 1].end > PHRASE_END) {
+        phrase = [];                                                // a new phrase begins
+        phraseDone = false;
+      }
+      notes.push(note);
+      phrase.push(note);
       if (notes.length > 8) notes.shift();
     }
     current = null;
     if (notes.length >= 4) {
       lastCheck = compareWithTheCall(notes.slice(-4));
       if (lastCheck.isTheCall) {
-        stop();
+        finished = true;
         onHeard();
       }
     }
   }
+
+  function maybeMirror(now) {
+    if (phraseDone || phrase.length < 4 || now - phrase[phrase.length - 1].end < PHRASE_END) return;
+    phraseDone = true;
+    if (now - lastMirrorAt < MIRROR_COOLDOWN) return;
+    lastMirrorAt = now;
+    onMirror(phrase.slice(-4));
+  }
+
+  function feed(now, semitone) {
+    if (finished) return;
+    if (now < deafUntil) { current = null; return; }
+    if (semitone === null) {
+      endCurrentNote();
+      if (!finished) maybeMirror(now);
+      return;
+    }
+    if (current) {
+      const jump = semitone - current.semitone;
+      if (Math.abs(Math.abs(jump) - 12) < OCTAVE_SLIP) { current.end = now; return; }   // an octave slip
+      if (Math.abs(jump) > SAME_NOTE) endCurrentNote();
+      if (finished) return;
+    }
+    if (!current) current = { semitone, start: now, end: now, frames: 1 };
+    else {
+      current.frames++;
+      current.semitone += (semitone - current.semitone) / current.frames;   // its average pitch
+      current.end = now;
+    }
+  }
+
+  // Stop hearing until a given time (e.g. while the bird sings), and forget the unfinished phrase.
+  function deafen(until) {
+    deafUntil = until;
+    current = null;
+    phrase = [];
+    phraseDone = false;
+  }
+
+  return {
+    feed,
+    deafen,
+    stop() { finished = true; },
+    report: () => ({ current, notes: notes.slice(-4), check: lastCheck }),
+  };
+}
+
+export function startListening(audio, stream, { onFrame, onHeard, onMirror }) {
+  const microphone = audio.createMediaStreamSource(stream);
+  const ears = audio.createAnalyser();
+  ears.fftSize = 2048;
+  microphone.connect(ears);
+
+  const samples = new Float32Array(ears.fftSize);
+  let listening = true;
+  const tracker = makeNoteTracker({
+    onHeard: () => { stop(); onHeard(); },
+    onMirror,
+  });
 
   function listen() {
     if (!listening) return;
     ears.getFloatTimeDomainData(samples);
     const reading = findPitch(samples, audio.sampleRate);
     const now = audio.currentTime;
-    if (reading.pitch === null) {
-      endCurrentNote();
-    } else {
-      const semitone = semitonesOf(reading.pitch);
-      if (current && Math.abs(semitone - current.semitone) > SAME_NOTE) endCurrentNote();
-      if (!current) current = { semitone, start: now, end: now, frames: 1 };
-      else {
-        current.frames++;
-        current.semitone += (semitone - current.semitone) / current.frames;   // its average pitch
-        current.end = now;
-      }
-    }
-    onFrame({ ...reading, now, current, notes: notes.slice(-4), check: lastCheck });
+    tracker.feed(now, reading.pitch === null ? null : semitonesOf(reading.pitch));
+    onFrame({ ...reading, now, ...tracker.report() });
     if (listening) setTimeout(listen, 33);
   }
 
   function stop() {
     listening = false;
+    tracker.stop();
     stream.getTracks().forEach((track) => track.stop());   // the microphone light goes off
     microphone.disconnect();
   }
 
   listen();
-  return { ears, stop };
+  return {
+    ears,
+    stop,
+    pauseFor: (ms) => tracker.deafen(audio.currentTime + ms / 1000),
+  };
 }

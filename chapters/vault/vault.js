@@ -11,9 +11,12 @@
 //                 the door, the doorway glows and the whole view burns out white, and the next chapter begins;
 //        wrong  → the dials shudder with a dull clank;
 //        jammed → too many tries this minute; wait.
+// Sounds:          the room's low wind ("vault.room"), dial ticks, the clank and the opening, all in
+//                  shared/sound_orchestra/sound_book.js.
 // What changes:    the site remembers the vault is open (so the next chapter can be entered).
 
 import { makeRandom } from "../shared/looks_random.js";
+import { cue, stopCue } from "../shared/sound_orchestra/orchestra.js";
 import { playClank, playVaultOpening } from "../shared/sounds.js";
 import { tellTheSite } from "../shared/tell_the_site.js";
 import { makeDials } from "./combination_dials.js";
@@ -86,6 +89,7 @@ async function tryTheCombination() {
     status.className = "lock-status is-granted";
     dials.glow();
     playVaultOpening();
+    stopCue("vault.room", { fade: 2.5 });       // the room's wind gives way to the opening
     scene.classList.add("is-opening");
     setTimeout(() => window.location.assign(answer.next), motionIsReduced ? 600 : OPENING_TIME);
     return;
@@ -100,6 +104,7 @@ async function tryTheCombination() {
   }, answer.jammed ? 4000 : 900);
 }
 
+cue("vault.room");                              // fades in (on the first touch, if the browser waits for one)
 placeRivets();
 raiseDust();
 followTheMouse();

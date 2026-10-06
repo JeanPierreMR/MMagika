@@ -1,0 +1,28 @@
+/* The sound lab's look: plain, dark, readable. */
+body { margin: 0; background: #0f0d14; color: #ddd8e6; font: 13px/1.5 system-ui, sans-serif; }
+header { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 10px 16px; background: #17131f; border-bottom: 1px solid #2b2438; }
+h1 { margin: 0 12px 0 0; font-size: 16px; color: #c9a7ff; }
+h2 { margin: 0 0 6px; font-size: 14px; color: #8fd3ff; }
+h2 small { color: #77708a; font-weight: 400; }
+main { padding: 8px 16px 40px; max-width: 1200px; }
+section { margin: 18px 0; padding: 14px; background: #15121c; border: 1px solid #262033; border-radius: 8px; }
+button { font: inherit; background: #262035; color: #eee; border: 1px solid #3a3150; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+button:hover { background: #312942; }
+button.on { background: #2f5d46; border-color: #4b8f6c; }
+input[type=range] { width: 120px; vertical-align: middle; }
+input[type=number] { width: 52px; background: #0f0d14; color: #eee; border: 1px solid #3a3150; border-radius: 4px; }
+input:not([type]) { background: #0f0d14; color: #eee; border: 1px solid #3a3150; border-radius: 4px; padding: 3px 6px; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #221c2e; vertical-align: middle; }
+th { color: #8d84a2; font-weight: 400; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+td.name { font-family: ui-monospace, monospace; color: #fff; }
+td.where { color: #8d84a2; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.hint, .muted { color: #77708a; }
+.readout { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 16px; margin-top: 10px; font-family: ui-monospace, monospace; }
+.readout b { color: #8d84a2; font-weight: 400; display: inline-block; width: 70px; }
+.events, .checks { font-family: ui-monospace, monospace; margin: 10px 0 0; padding-left: 22px; }
+.events li.heard, .checks li.pass { color: #8dffb5; }
+.events li.mirror { color: #ffd68a; }
+.checks li.fail { color: #ff8f9e; }
+#copied { color: #8dffb5; }

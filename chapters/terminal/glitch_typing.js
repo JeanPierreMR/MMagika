@@ -15,9 +15,12 @@
 //      the same on every visit.
 //   3. Everything scrambles, a bright line wipes across, and the clean future interface appears:
 //      "Welcome Doctor · Starting letter ***". The words fly up and fade, and the letter opens.
+// Sounds:          the panic's hum, static, keystrokes and the welcome chord ("terminal.*" in
+//                  shared/sound_orchestra/sound_book.js); all fade out as the words fly up.
 // What changes:    the site is told this chapter is finished.
 
 import { makeRandom, pickOneOf } from "../shared/looks_random.js";
+import { cue, fadeAll, stopCue } from "../shared/sound_orchestra/orchestra.js";
 import { playKeystroke, playStatic } from "../shared/sounds.js";
 import { finishChapterAndGoOn } from "../shared/tell_the_site.js";
 
@@ -41,6 +44,7 @@ const cursor = document.querySelector(".cursor");
 
 // ---- 1. The crash ----------------------------------------------------------------------------------
 async function crash() {
+  cue("terminal.panic");                          // the machine's hum while it panics
   const panic = document.querySelector(".kernel-panic");
   const text = panic.querySelector(".panic-text");
   const lines = document.getElementById("kernel-panic-text").content.textContent.trim().split("\n");
@@ -62,6 +66,7 @@ async function crash() {
   text.classList.add("is-waiting");
   await wait(PANIC_READ_TIME);
   panic.classList.add("is-tearing");
+  stopCue("terminal.panic", { fade: 0.6 });
   playStatic(0.6);
   await wait(900);
   const blackout = document.querySelector(".blackout");
@@ -185,6 +190,7 @@ async function wipeToTheFuture() {
   terminal.hidden = true;
   scene.classList.add("is-clean");
   document.querySelector(".welcome").hidden = false;
+  cue("terminal.welcome");                        // a soft glassy chord
 }
 
 async function run() {
@@ -198,6 +204,7 @@ async function run() {
   await wipeToTheFuture();
   await wait(WELCOME_TIME);
   document.querySelector(".welcome").classList.add("is-leaving");
+  fadeAll(FLY_UP_TIME / 1000);
   await wait(FLY_UP_TIME);
   await finishChapterAndGoOn("terminal");
 }
