@@ -123,16 +123,28 @@ function every(audio, ms, step) {
 
 // A dial clicking into place.
 export function tick(audio, out, { when }) {
-  noiseBurst(audio, out, { when, duration: 0.03, volume: 0.25, type: "bandpass", frequency: 3200, q: 4, seed: 11 });
-  tone(audio, out, { when, pitch: 1800, duration: 0.025, volume: 0.04, wave: "square" });
-  return { length: 0.06 };
+  noiseBurst(audio, out, { when, duration: 0.03, volume: 0.2, type: "bandpass", frequency: 2600, q: 3, seed: 11 });
+  return { length: 0.05 };
 }
 
-// A dull, muffled metal clank (a wrong combination).
+// A wrong combination: the door is pulled, the heavy metal scrapes a moment and hits its stop with a
+// low clank that rings on in the empty room (a large reverb). The clank's ring is a few metal-like
+// partials (not whole-number multiples, so it sounds like struck steel, not a musical note).
 export function clank(audio, out, { when }) {
-  tone(audio, out, { when, pitch: 110, duration: 0.35, volume: 0.3, wave: "triangle", slideTo: 70 });
-  noiseBurst(audio, out, { when, duration: 0.25, volume: 0.25, type: "lowpass", frequency: 650, seed: 12 });
-  return { length: 0.4 };
+  const hall = makeHall(audio, 3.2, 13);
+  hall.connect(makeGain(audio, 0.9)).connect(out);
+  const room = makeFilter(audio, "lowpass", 1600, 0.7);       // heavy metal, muffled by the door
+  room.connect(out);
+  room.connect(hall);
+  const hit = when + 0.16;                                    // after the short scrape
+
+  noiseBurst(audio, room, { when, duration: 0.16, volume: 0.05, type: "bandpass", frequency: 500, q: 3, seed: 12 });   // the scrape
+  tone(audio, room, { when: hit, pitch: 62, duration: 0.45, volume: 0.45, slideTo: 44, attack: 0.004 });               // the thud
+  for (const [pitch, volume, ring] of [[118, 0.12, 1.4], [287, 0.06, 1.0], [463, 0.035, 0.8], [771, 0.02, 0.6]]) {
+    tone(audio, room, { when: hit, pitch, duration: ring, volume, wave: "triangle", attack: 0.003 });                  // the metal ringing
+  }
+  noiseBurst(audio, room, { when: hit, duration: 0.07, volume: 0.25, type: "lowpass", frequency: 900, seed: 14 });     // the impact
+  return { length: 3.5 };
 }
 
 // The vault opens: heavy bolts slide back, a deep swell rises, then a bright airy shimmer as the light
@@ -234,7 +246,7 @@ export function forestBed(audio, out) {
   const stopBirds = every(audio, 500, () => {
     if (audio.currentTime < nextBird) return;
     distantChirp(audio, distance, audio.currentTime + 0.05, random);
-    nextBird = audio.currentTime + 2.5 + random() * 6;
+    nextBird = audio.currentTime + 6 + random() * 9;           // rare: a distant bird every 6–15 s
   });
 
   return keepGoing(audio, [leaves, gusts.oscillator, rustle, rustleWobble.oscillator], stopBirds);
@@ -248,20 +260,55 @@ function distantChirp(audio, out, when, random) {
   const pitch = 2800 + random() * 2000;
   for (let i = 0; i < notes; i++) {
     const at = when + i * (0.09 + random() * 0.05);
-    tone(audio, side, { when: at, pitch: pitch * (0.85 + random() * 0.15), duration: 0.07, volume: 0.025, slideTo: pitch * (1.05 + random() * 0.2), attack: 0.005 });
+    tone(audio, side, { when: at, pitch: pitch * (0.9 + random() * 0.1), duration: 0.12, volume: 0.012, slideTo: pitch * (1.02 + random() * 0.06), attack: 0.03 });
   }
 }
 
-// "Not quite": a very soft, short, falling breath-tone. It must never feel like an alarm.
-export function notQuite(audio, out, { when }) {
-  const hall = makeHall(audio, 1.5, 51);
-  hall.connect(makeGain(audio, 0.3)).connect(out);
-  const muffle = makeFilter(audio, "lowpass", 900, 0.7);
-  muffle.connect(out);
-  muffle.connect(hall);
-  tone(audio, muffle, { when, pitch: 392, duration: 0.45, volume: 0.09, wave: "triangle", slideTo: 294, attack: 0.04 });
-  noiseBurst(audio, muffle, { when, duration: 0.35, volume: 0.03, type: "bandpass", frequency: 700, q: 2, seed: 52 });
-  return { length: 1.2 };
+// A wrong tune turns dark: as the bird's last note sinks, low voices join one by one underneath (like a
+// low choir singing "ooh"), building a dark chord, then their lines glide together into one low note,
+// which fades in a large dark space. Change the voices in LOW_CHOIR.
+//   from: the note a voice joins on (hertz), joins: seconds after the start it fades in.
+//   All of them meet on MEET_ON at MEET_AT seconds, hold, and fade by FADE_BY.
+const LOW_CHOIR = [
+  { from: 73.42, joins: 0.0 },    // D2, the ground
+  { from: 110.0, joins: 0.6 },    // A2, above
+  { from: 87.31, joins: 1.2 },    // F2, the minor third: dark
+  { from: 58.27, joins: 1.8 },    // B♭1, below: darker still
+];
+const MEET_ON = 73.42;            // D2: where every voice ends up
+const MEET_AT = [2.8, 3.8];       // seconds: the lines start gliding together, and have met
+const FADE_BY = 5.2;
+const OOH = [[320, 5, 1], [780, 6, 0.35]];   // the "ooh" vowel's resonances: [hertz, sharpness, strength]
+
+export function darkTurn(audio, out, { when }) {
+  const hall = makeHall(audio, 4, 51);
+  hall.connect(makeGain(audio, 0.7)).connect(out);
+  const voices = makeGain(audio, 1);
+  OOH.forEach(([frequency, q, strength]) => {
+    voices.connect(makeFilter(audio, "bandpass", frequency, q)).connect(makeGain(audio, strength * 3)).connect(out);
+  });
+  voices.connect(makeFilter(audio, "lowpass", 260, 0.7)).connect(makeGain(audio, 0.6)).connect(out);   // the body
+  voices.connect(hall);
+
+  LOW_CHOIR.forEach(({ from, joins }, number) => {
+    for (const detune of [-6, 6]) {                       // each voice: two slightly different singers
+      const singer = audio.createOscillator();
+      singer.type = "sawtooth";
+      singer.detune.value = detune + number * 2;
+      singer.frequency.setValueAtTime(from, when);
+      singer.frequency.setValueAtTime(from, when + MEET_AT[0]);
+      singer.frequency.exponentialRampToValueAtTime(MEET_ON, when + MEET_AT[1]);   // the lines join into one
+      const level = makeGain(audio, SILENT);
+      level.gain.setValueAtTime(SILENT, when + joins);
+      level.gain.exponentialRampToValueAtTime(0.05, when + joins + 0.5);
+      level.gain.setValueAtTime(0.05, when + MEET_AT[1]);
+      level.gain.exponentialRampToValueAtTime(SILENT, when + FADE_BY);
+      singer.connect(level).connect(voices);
+      singer.start(when + joins);
+      singer.stop(when + FADE_BY + 0.1);
+    }
+  });
+  return { length: FADE_BY + 0.5 };
 }
 
 // ---- The terminal ------------------------------------------------------------------------------
@@ -291,11 +338,11 @@ export function staticCrackle(audio, out, { when, duration = 0.25 }) {
 // A soft keystroke (the terminal typing).
 const keyRandom = makeRandom(80);
 export function keystroke(audio, out, { when }) {
-  noiseBurst(audio, out, { when, duration: 0.02, volume: 0.06, type: "bandpass", frequency: 2400 + keyRandom() * 800, q: 3, seed: 81 });
+  noiseBurst(audio, out, { when, duration: 0.02, volume: 0.04, type: "bandpass", frequency: 1800 + keyRandom() * 500, q: 2, seed: 81 });
   return { length: 0.03 };
 }
 
-// "Welcome Doctor": one soft, glassy chord with a long, gentle fade.
+// "Welcome Doctor": one soft, glassy chord that swells in and fades slowly.
 export function welcomeChime(audio, out, { when }) {
   const hall = makeHall(audio, 3.5, 91);
   hall.connect(makeGain(audio, 0.7)).connect(out);
@@ -306,7 +353,7 @@ export function welcomeChime(audio, out, { when }) {
       voice.detune.value = detune;
       const level = makeGain(audio, SILENT);
       level.gain.setValueAtTime(SILENT, when);
-      level.gain.exponentialRampToValueAtTime(0.03, when + 0.03);
+      level.gain.exponentialRampToValueAtTime(0.025, when + 0.4);           // swells in: no "ding"
       level.gain.exponentialRampToValueAtTime(SILENT, when + 3);
       voice.connect(level);
       level.connect(out);
@@ -369,15 +416,22 @@ export function choirBed(audio, out) {
   return keepGoing(audio, sources, stopChanging);
 }
 
-// The seal bursting: a soft cascade of bright sparkles.
+// The seal bursting: a warm, low bloom (a soft chord swelling up and fading in the room), no sparkles.
 export function sealShimmer(audio, out, { when }) {
-  const hall = makeHall(audio, 2.5, 111);
-  hall.connect(makeGain(audio, 0.6)).connect(out);
-  const random = makeRandom(112);
-  for (let i = 0; i < 7; i++) {
-    const at = when + i * 0.06 + random() * 0.03;
-    tone(audio, hall, { when: at, pitch: 2000 + random() * 3000, duration: 0.3, volume: 0.07, attack: 0.005 });
-    tone(audio, out, { when: at, pitch: 2000 + random() * 3000, duration: 0.2, volume: 0.035, attack: 0.005 });
+  const hall = makeHall(audio, 3, 111);
+  hall.connect(makeGain(audio, 0.7)).connect(out);
+  for (const pitch of [146.83, 220.0, 293.66, 369.99]) {          // D major, low and warm
+    const voice = audio.createOscillator();
+    voice.frequency.value = pitch;
+    const level = makeGain(audio, SILENT);
+    level.gain.setValueAtTime(SILENT, when);
+    level.gain.exponentialRampToValueAtTime(0.06, when + 0.5);
+    level.gain.exponentialRampToValueAtTime(SILENT, when + 2.6);
+    voice.connect(level);
+    level.connect(out);
+    level.connect(hall);
+    voice.start(when);
+    voice.stop(when + 2.7);
   }
-  return { length: 2 };
+  return { length: 3 };
 }

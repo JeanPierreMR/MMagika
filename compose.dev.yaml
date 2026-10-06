@@ -1,4 +1,4 @@
-# FOR YOUR COMPUTER ONLY: the site with live reloading, plus the sound lab and the letter tuner.
+# FOR YOUR COMPUTER ONLY: the site with live reloading, plus the sound lab (with uploads) and the letter tuner.
 # It reuses the real Dockerfile and changes nothing in the code. Your project folder is mounted into
 # the container, so edits show up straight away (reload the page).
 #
@@ -17,11 +17,11 @@ services:
       DJANGO_DEBUG: "1"              # reloads on every change, ?skip works
     command: python manage.py runserver 0.0.0.0:8000
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
   lab:
     build: .
     volumes:
       - .:/app
-    command: python -m http.server 8004 --directory /app
+    command: python tools/sound_lab/lab_server.py 8004 --in-docker   # also saves uploads into audio/
     ports:
-      - "8004:8004"
+      - "127.0.0.1:8004:8004"           # only this computer can reach it (it accepts uploads)

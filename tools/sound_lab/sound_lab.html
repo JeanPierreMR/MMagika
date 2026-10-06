@@ -7,13 +7,15 @@
   It uses the site's real code (chapters/shared/sound_orchestra/ and chapters/signal/), so what you hear
   here is what visitors hear.
 
-  Open it through any simple server started in the project folder, e.g.
-      python3 -m http.server 8004
+  Start it with its helper (it also lets you upload recordings):
+      python3 tools/sound_lab/lab_server.py
   then http://localhost:8004/tools/sound_lab/sound_lab.html
   (or the "lab" service of compose.dev.yaml). The microphone works on localhost.
 
-  Changes made here (volumes, fades) only last until you reload: press "Copy settings" and paste
-  the numbers into chapters/shared/sound_orchestra/sound_book.js to keep them.
+  Each cue's dropdown picks what it plays: its synthesized placeholder, or any recording in
+  chapters/shared/sound_orchestra/audio/ ("upload…" adds one there). Changes made here (sound, volume,
+  fades) only last until you reload: "copy" puts that cue's settings on the clipboard, ready to paste
+  over its entry in chapters/shared/sound_orchestra/sound_book.js.
 -->
 <link rel="stylesheet" href="sound_lab.css">
 
@@ -21,16 +23,19 @@
   <h1>Sound lab</h1>
   <label class="master">Everything <input id="master" type="range" min="0" max="1" step="0.01"> <output id="master-value"></output></label>
   <button id="stop-all" type="button">Fade everything out</button>
-  <button id="copy" type="button">Copy settings</button>
+  <button id="copy" type="button">Copy all cues</button>
   <span id="copied"></span>
 </header>
 
 <main>
   <section>
     <h2>Sounds and songs <small>(sound_book.js)</small></h2>
-    <p class="hint">Beds keep going until stopped (▶ / ■). A bed with a file plays the file; otherwise its synthesized placeholder.</p>
+    <p class="hint">Beds keep going until stopped (▶ / ■). "sound" picks the synthesized placeholder or a recording from
+      <code>sound_orchestra/audio/</code>; "upload…" adds a recording there and uses it. "copy" copies the cue's settings to paste into sound_book.js.</p>
+    <p id="upload-off" class="hint" hidden>Uploading needs the lab's helper: <code>python3 tools/sound_lab/lab_server.py</code></p>
+    <input id="upload-file" type="file" accept="audio/*" hidden>
     <table id="cues">
-      <thead><tr><th>cue</th><th>kind</th><th></th><th>volume</th><th>fade in</th><th>fade out</th><th>where</th></tr></thead>
+      <thead><tr><th>cue</th><th></th><th>sound</th><th>volume</th><th>fade in</th><th>fade out</th><th></th><th>where</th></tr></thead>
       <tbody></tbody>
     </table>
   </section>
@@ -38,13 +43,17 @@
   <section>
     <h2>The mockingjay <small>(bird_song.js)</small></h2>
     <div class="row">
-      <button id="sing-call" type="button">Sing the call</button>
-      <label>Mirror these notes <input id="mirror-notes" value="C4 E4 D4 G3" size="16"></label>
-      <button id="sing-mirror" type="button">Mirror them</button>
-      <button id="not-quite" type="button">"Not quite"</button>
-      <button id="mirror-and-not-quite" type="button">Mirror + not quite</button>
+      <button id="sing-call" type="button">One bird: the call</button>
+      <button id="sing-choir" type="button">The choir of birds (right call)</button>
     </div>
-    <p class="hint">Note names like G4, Bb4, F#3 (any octave: the bird moves them into its range).</p>
+    <div class="row">
+      <label>A wrong tune <input id="mirror-notes" value="C4 E4 D4 G3" size="16"></label>
+      <button id="sing-mirror" type="button">Mirror it</button>
+      <button id="dark-turn" type="button">The dark turn</button>
+      <button id="mirror-and-dark" type="button">Mirror + dark turn (as on the page)</button>
+    </div>
+    <p class="hint">Note names like G4, Bb4, F#3 (any octave: the bird moves them into its range). For the choir, the
+      key of the first note above is used, as if the visitor had hummed in it.</p>
   </section>
 
   <section>

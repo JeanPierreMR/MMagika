@@ -107,18 +107,18 @@ All sounds live in **`chapters/shared/sound_orchestra/`**, and **`sound_book.js`
 
 | Chapter | What you hear |
 |---|---|
-| Vault | a low wind in the empty room; dial ticks; a muffled clank when wrong; on opening, bolts, a deep swell and a bright shimmer fading into the white |
-| Signal | a forest at dawn once the microphone is on; the mockingjay; a soft "not quite" |
-| Terminal | the machine's hum during the panic, static, keystrokes, a soft glassy chord for "Welcome Doctor" |
-| Letter | angels singing, fading in with the page; a sparkle as the seal bursts; the choir dips when the connection fails |
+| Vault | a low wind in the empty room; soft dial clicks; when wrong, the metal hits its stop with a low clank ringing in the room; on opening, bolts, a deep swell and a bright shimmer fading into the white |
+| Signal | a forest at dawn once the microphone is on; birds joining into one call for the right call; for a wrong one, the bird's echo sinking into a low, dark choir |
+| Terminal | the machine's hum during the panic, static, soft keystrokes, a glassy chord swelling in for "Welcome Doctor" |
+| Letter | angels singing, fading in with the page; a warm low bloom as the seal bursts; the choir dips when the connection fails |
 
-**Every sound is synthesized for now** (placeholders, in `synth_recipes.js`). To use a real recording instead, put a CC0 file in `sound_orchestra/audio/` and set the cue's `file` in `sound_book.js` (e.g. `file: "audio/forest.ogg"`). `audio/README.md` lists what to look for, with CC0-filtered search links, and a place for credits.
+**Every sound is synthesized for now** (placeholders, in `synth_recipes.js`). To use a real recording instead, upload it from the sound lab (it's saved into `sound_orchestra/audio/`), pick it in that cue's dropdown, press "copy" and paste the cue over its entry in `sound_book.js`. Or put the file there yourself and set the cue's `file` (e.g. `file: "audio/forest.ogg"`). `audio/README.md` lists what to look for, with CC0-filtered search links, and a place for credits.
 
 Browsers only allow sound after the visitor has touched the page. The terminal and the letter open by themselves, so if a browser holds their sound back, it fades in at the visitor's first tap, click, scroll or key; nothing on screen asks for it.
 
-**The mockingjay** accepts the call whistled or hummed, in any key, with each jump up to 2.5 semitones off, taking 1.5 to 7 seconds (constants at the top of `chapters/signal/listen_for_the_call.js`). If someone sings four other notes and pauses, the bird softly whistles them back, then a quiet "not quite" (at most once every 5 seconds). The bird's voice is set by the constants at the top of `bird_song.js`.
+**The mockingjay** accepts the call whistled or hummed, in any key, with each jump up to 2.5 semitones off, taking 1.5 to 7 seconds (constants at the top of `chapters/signal/listen_for_the_call.js`). When it's right, a choir of birds answers with ONE call, in the key the visitor sang: the lead bird starts, the others join at later notes in harmony, and on the last note their lines glide together into one (`CHOIR` in `bird_song.js`). If someone sings four other notes and pauses, a bird slowly whistles them back, its last note sinking, while low voices join underneath into a dark chord that then closes into a single low note (`signal.wrong`, `LOW_CHOIR` in `synth_recipes.js`; at most once every 5 seconds). The bird's voice and speed (`SLOWER`) are the constants at the top of `bird_song.js`.
 
-**Try sounds without walking through the story** in the sound lab (`tools/sound_lab/`): play every cue, change volumes and fades live ("Copy settings" gives you the numbers to paste back), make the bird sing or mirror any notes, hum into the microphone to see what the recogniser hears, and run its self-check. Open it with `docker compose -f compose.dev.yaml up`, or `python3 -m http.server 8004` in the project folder.
+**Try sounds without walking through the story** in the sound lab (`tools/sound_lab/`): play every cue, change volumes and fades live ("Copy settings" gives you the numbers to paste back), switch any cue between its placeholder and the recordings in `audio/`, upload new ones, copy a cue's settings, hear the choir, the mirror and the dark turn, hum into the microphone to see what the recogniser hears, and run its self-check. Open it with `docker compose -f compose.dev.yaml up`, or `python3 tools/sound_lab/lab_server.py`, then http://localhost:8004/tools/sound_lab/sound_lab.html.
 
 ## Microphone and privacy
 

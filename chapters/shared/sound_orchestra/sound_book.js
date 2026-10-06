@@ -32,7 +32,7 @@ export const SOUND_BOOK = {
     file: null, synth: "tick", volume: 0.7,
   },
   "vault.wrong": {
-    kind: "once", where: "a wrong combination",
+    kind: "once", where: "a wrong combination: the metal hits its stop, a low clank ringing in the room",
     file: null, synth: "clank", volume: 0.7,
   },
   "vault.open": {
@@ -48,12 +48,13 @@ export const SOUND_BOOK = {
     synth: "forestBed", volume: 0.5, fadeIn: 4, fadeOut: 2, loop: true,
   },
   "signal.bird": {
-    kind: "voice", where: "the mockingjay: singing the call, and mirroring the visitor (bird_song.js)",
+    kind: "voice", where: "the mockingjay: birds joining into one call for the right call, and mirroring wrong tunes (bird_song.js)",
     volume: 0.22,
   },
-  "signal.not_quite": {
-    kind: "once", where: "after the bird mirrors 4 notes that aren't the call: a soft, falling breath",
-    file: null, synth: "notQuite", volume: 0.8,
+  "signal.wrong": {
+    kind: "once", where: "after the bird mirrors 4 notes that aren't the call: low voices join into a dark chord, then one low note",
+    file: null,             // e.g. "audio/wrong_dark.ogg": a low cello/drone phrase (~4 s)
+    synth: "darkTurn", volume: 0.55,
   },
 
   // ---- 3. The terminal -----------------------------------------------------------------------
@@ -81,7 +82,7 @@ export const SOUND_BOOK = {
     synth: "choirBed", volume: 0.55, fadeIn: 6, fadeOut: 4, loop: true,
   },
   "letter.seal": {
-    kind: "once", where: "the wax seal bursts",
+    kind: "once", where: "the wax seal bursts: a warm, low bloom",
     file: null, synth: "sealShimmer", volume: 0.7,
   },
   "letter.glitch": {

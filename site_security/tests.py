@@ -232,3 +232,19 @@ class TheSoundBook(SimpleTestCase):
         named = set(re.findall(r'synth: "(\w+)"', (folder / "sound_book.js").read_text()))
         made = set(re.findall(r"^export function (\w+)\(", (folder / "synth_recipes.js").read_text(), re.MULTILINE))
         self.assertEqual(named - made, set(), "synth recipes named in sound_book.js but missing")
+
+
+class TheSoundLabUploads(SimpleTestCase):
+    """The sound lab's helper (tools/sound_lab/lab_server.py) only saves plain audio file names."""
+    def test_only_plain_audio_names_are_accepted(self):
+        import importlib.util
+        from pathlib import Path
+        path = Path(__file__).resolve().parent.parent / "tools" / "sound_lab" / "lab_server.py"
+        spec = importlib.util.spec_from_file_location("lab_server", path)
+        lab_server = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(lab_server)
+        self.assertEqual(lab_server.safe_recording_name("forest_dawn.ogg"), "forest_dawn.ogg")
+        self.assertEqual(lab_server.safe_recording_name("../../site_settings/settings.py"), None)
+        self.assertEqual(lab_server.safe_recording_name("../evil.mp3"), "evil.mp3")    # only the name is kept
+        self.assertEqual(lab_server.safe_recording_name("notes.txt"), None)
+        self.assertEqual(lab_server.safe_recording_name(".hidden.ogg"), None)

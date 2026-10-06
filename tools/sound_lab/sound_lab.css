@@ -26,3 +26,7 @@ td.where { color: #8d84a2; }
 .events li.mirror { color: #ffd68a; }
 .checks li.fail { color: #ff8f9e; }
 #copied { color: #8dffb5; }
+select { font: inherit; background: #0f0d14; color: #eee; border: 1px solid #3a3150; border-radius: 4px; padding: 3px 4px; max-width: 240px; }
+button:disabled { opacity: 0.4; cursor: default; }
+code { color: #c9a7ff; }
+td .muted { font-size: 11px; }

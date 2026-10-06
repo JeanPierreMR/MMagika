@@ -5,7 +5,8 @@
 // What starts it:  signal.js, once the microphone is on. It keeps listening until the call is heard.
 // What it gives back: "ears" (the sound, for the drawing), pauseFor(ms) (stop listening for a moment,
 //   e.g. while the bird sings, so it doesn't hear itself), and every ~33 ms a report of what it worked
-//   out (onFrame), which the drawing shows. onHeard() once the call is right; onMirror(notes) when the
+//   out (onFrame), which the drawing shows. onHeard(notes) once the call is right (with the four notes
+//   heard, so the birds can answer in the visitor's key); onMirror(notes) when the
 //   visitor sang four notes that weren't the call.
 // Privacy: the sound is only analysed here, in the browser, as it comes in. Nothing is recorded
 // or sent anywhere.
@@ -93,7 +94,7 @@ export function compareWithTheCall(four) {
 }
 
 // Steps 2 to 6, without the microphone: feed it, moment by moment, a time (seconds) and the pitch heard
-// then (in semitones, or null for quiet). It calls onHeard() once the call is sung, and onMirror(four
+// then (in semitones, or null for quiet). It calls onHeard(four notes) once the call is sung, and onMirror(four
 // notes) when a wrong phrase ends. Kept separate so it can be tested with made-up notes (sound lab).
 export function makeNoteTracker({ onHeard, onMirror = () => {} }) {
   const notes = [];                 // finished notes: { semitone, start, end }
@@ -125,7 +126,7 @@ export function makeNoteTracker({ onHeard, onMirror = () => {} }) {
       lastCheck = compareWithTheCall(notes.slice(-4));
       if (lastCheck.isTheCall) {
         finished = true;
-        onHeard();
+        onHeard(notes.slice(-4));
       }
     }
   }
@@ -185,7 +186,7 @@ export function startListening(audio, stream, { onFrame, onHeard, onMirror }) {
   const samples = new Float32Array(ears.fftSize);
   let listening = true;
   const tracker = makeNoteTracker({
-    onHeard: () => { stop(); onHeard(); },
+    onHeard: (four) => { stop(); onHeard(four); },
     onMirror,
   });
 

@@ -166,6 +166,11 @@ export function duck(name, amount, seconds = 0.6) {
   record.level.gain.linearRampToValueAtTime(volume, now + 0.08 + seconds);
 }
 
+// For the sound lab: forget a loaded recording (after a new file of the same name is uploaded).
+export function forgetRecording(file) {
+  recordings.delete(new URL(file, import.meta.url).href);
+}
+
 // For the sound lab: is a bed playing, and follow a changed volume in the sound book.
 export function isPlaying(name) {
   return playing.has(name);
