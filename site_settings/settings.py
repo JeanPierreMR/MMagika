@@ -32,6 +32,7 @@ INSTALLED_APPS = [
 # Every request passes through these steps, top to bottom, before reaching the page.
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",               # HTTPS and security headers
+    "site_security.no_cache_while_developing.NoCacheWhileDeveloping",  # on your computer: always the newest files
     "site_security.limit_requests_per_visitor.LimitRequestsPerVisitor",  # slows down anyone sending too many requests
     "whitenoise.middleware.WhiteNoiseMiddleware",                  # answers requests for pictures, styles, scripts
     "django.contrib.sessions.middleware.SessionMiddleware",        # remembers how far the visitor has got

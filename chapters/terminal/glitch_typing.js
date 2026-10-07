@@ -28,10 +28,16 @@ const ODD_SYMBOLS = [..."▓▒░∆⌁☍⟟⌬⍜⏃⏚⟊⧖⧗⊗⋔⌇⍙�
 const TYPING_SPEED = 26;          // ms per character
 const SETTLE_TIME = 70;           // ms a character stays a symbol before it settles
 const STAYS_GLITCHED = 0.035;     // share of characters that never settle
-const GLITCH_EVERY = [1200, 3600];   // ms between glitches while typing (somewhere in this range)
+const GLITCH_EVERY = [350, 1100];    // ms between glitches while typing (somewhere in this range)
+const GLITCH_FLASH = 0.5;            // how long each glitch shows (1 = the original length; smaller = snappier)
+const BEEP_EVERY = 1000;             // ms: while the cursor waits between lines, it beeps this often (with its blink)
+const BEEP_IF_WAITING = 600;         // ms: only pauses at least this long get beeps
 const PANIC_READ_TIME = 3200;     // ms the finished kernel panic stays up before the screen tears
 const LINE_PAUSE = 900;           // ms after each line, unless it has its own data-pause
 const BAR_CELLS = 14;             // the progress bar's width, in blocks
+const TEAR_TIME = 700;            // ms the kernel panic takes to break up; matches screen-tears in terminal.css
+const TEAR_BURSTS = 9;            // how many times its text breaks further while it tears
+const SWITCH_OFF_TIME = 380;      // ms the old terminal takes to switch off; matches crt-switches-off in terminal.css
 const WELCOME_TIME = 3000;        // ms "Welcome Doctor" stays before flying up
 const FLY_UP_TIME = 1400;         // ms; matches welcome-flies-up in terminal.css
 
@@ -65,26 +71,38 @@ async function crash() {
   }
   text.classList.add("is-waiting");
   await wait(PANIC_READ_TIME);
+  // The panic breaks up: the screen jumps between ragged slices, colour flips and black frames
+  // (terminal.css "screen-tears"), while the text itself turns to garbage, line by line, in bursts.
   panic.classList.add("is-tearing");
-  stopCue("terminal.panic", { fade: 0.6 });
-  playStatic(0.6);
-  await wait(900);
+  stopCue("terminal.panic", { fade: 0.1 });
+  const torn = text.textContent.split("\n");
+  for (let burst = 0; burst < TEAR_BURSTS; burst++) {
+    for (let i = 0; i < torn.length; i++) {
+      if (random() < 0.35) torn[i] = [...torn[i]].map((c) => (c === " " || random() < 0.5 ? c : pickOneOf(ODD_SYMBOLS, random))).join("");
+      if (random() < 0.08) torn[i] = "";                                  // a line drops out
+    }
+    text.textContent = torn.join("\n");
+    if (burst % 2 === 0) playStatic(0.06 + random() * 0.08);
+    await wait(TEAR_TIME / TEAR_BURSTS);
+  }
   const blackout = document.querySelector(".blackout");
+  blackout.style.transition = "none";              // cut to black at once, no fade
   blackout.classList.add("is-dark");
   panic.hidden = true;
   await wait(1000);                                 // one second of black
   blackout.classList.remove("is-dark");
+  blackout.style.transition = "";
 }
 
 // ---- 2. Glitches while it types -----------------------------------------------------------------------
 const GLITCHES = {
-  coloursSplit() { flash(terminal, "colours-split", 140); },
-  flicker() { flash(terminal, "flickers", 90); },
+  coloursSplit() { flash(terminal, "colours-split", 140 * GLITCH_FLASH); },
+  flicker() { flash(terminal, "flickers", 90 * GLITCH_FLASH); },
   interference() {
     const bar = document.querySelector(".interference");
     bar.style.setProperty("--bar-top", `${10 + random() * 75}%`);
     bar.style.setProperty("--bar-height", `${1.5 + random() * 6}%`);
-    flash(bar, "is-on", 110);
+    flash(bar, "is-on", 110 * GLITCH_FLASH);
   },
   scramble() {
     const letters = [...terminal.querySelectorAll(".script span span")].filter((l) => l.textContent.trim() && !l.classList.contains("glitched"));
@@ -92,7 +110,7 @@ const GLITCHES = {
       const letter = pickOneOf(letters, random);
       const real = letter.textContent;
       letter.textContent = pickOneOf(ODD_SYMBOLS, random);
-      setTimeout(() => { letter.textContent = real; }, 160);
+      setTimeout(() => { letter.textContent = real; }, 160 * GLITCH_FLASH);
     }
   },
 };
@@ -122,6 +140,20 @@ function piecesOf(line) {
   }));
 }
 
+// Waiting between lines: the cursor blinks, and beeps softly with each blink (like the KND terminals),
+// starting the blink afresh so the beep and the light go together.
+async function waitWithBeeps(ms) {
+  if (motionIsReduced || ms < BEEP_IF_WAITING) return wait(ms);
+  cursor.style.animation = "none";
+  void cursor.offsetWidth;                         // restart the blink from "on"
+  cursor.style.animation = "";
+  const began = performance.now();
+  while (performance.now() - began < ms - 150) {
+    cue("terminal.beep");
+    await wait(Math.min(BEEP_EVERY, ms - (performance.now() - began)));
+  }
+}
+
 async function typeLine(line) {
   const pieces = piecesOf(line);
   line.textContent = "";
@@ -148,7 +180,7 @@ async function typeLine(line) {
   }
   if (line.dataset.working) await showWorking(line, Number(line.dataset.working));
   line.classList.replace("is-typing", "is-typed");
-  await wait(Number(line.dataset.pause || LINE_PAUSE));
+  await waitWithBeeps(Number(line.dataset.pause || LINE_PAUSE));
 }
 
 // The machine working on a line: a bar fills up to 100% in about `ms`, in uneven jumps with
@@ -184,9 +216,12 @@ async function scrambleEverything() {
   }
 }
 
+// The old terminal switches off like an old CRT: not smooth, but in jerky steps — it flares, collapses to
+// a bright line, then to a dot, and it's gone (terminal.css "crt-switches-off"), with a crack of static.
 async function wipeToTheFuture() {
-  document.querySelector(".wipe").classList.add("is-wiping");
-  await wait(450);                              // the bright line is in the middle of the screen
+  playStatic(0.3);
+  terminal.classList.add("is-switching-off");
+  await wait(SWITCH_OFF_TIME);
   terminal.hidden = true;
   scene.classList.add("is-clean");
   document.querySelector(".welcome").hidden = false;

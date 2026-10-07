@@ -31,7 +31,8 @@
   <section>
     <h2>Sounds and songs <small>(sound_book.js)</small></h2>
     <p class="hint">Beds keep going until stopped (▶ / ■). "sound" picks the synthesized placeholder or a recording from
-      <code>sound_orchestra/audio/</code>; "upload…" adds a recording there and uses it. "copy" copies the cue's settings to paste into sound_book.js.</p>
+      <code>sound_orchestra/audio/</code>; "upload…" adds a recording there and uses it. Under "candidates": recordings found online, played from Freesound's preview; they're listed, with license and
+      credit, in <code>sound_orchestra/SOUND_CANDIDATES.md</code>. "copy" copies the cue's settings to paste into sound_book.js.</p>
     <p id="upload-off" class="hint" hidden>Uploading needs the lab's helper: <code>python3 tools/sound_lab/lab_server.py</code></p>
     <input id="upload-file" type="file" accept="audio/*" hidden>
     <table id="cues">
@@ -43,15 +44,17 @@
   <section>
     <h2>The mockingjay <small>(bird_song.js)</small></h2>
     <div class="row">
-      <button id="sing-call" type="button">One bird: the call</button>
-      <button id="sing-choir" type="button">The choir of birds (right call)</button>
+      <label>who sings <select id="voice"></select></label>
+      <button id="sing-call" type="button">One singer: the call</button>
+      <button id="sing-choir" type="button">The choir (right call)</button>
     </div>
     <div class="row">
       <label>A wrong tune <input id="mirror-notes" value="C4 E4 D4 G3" size="16"></label>
-      <button id="sing-mirror" type="button">Mirror it</button>
-      <button id="dark-turn" type="button">The dark turn</button>
-      <button id="mirror-and-dark" type="button">Mirror + dark turn (as on the page)</button>
+      <button id="sing-mirror" type="button">Mirror it, a little off (as on the page)</button>
     </div>
+    <p class="hint">"who sings" changes only the lab. To keep a choice for the page: CHOIR_VOICE (the right call) and
+      WRONG_TUNE.voice (a wrong tune) at the top of chapters/signal/bird_song.js; each voice's range, attack and vibrato
+      are in VOICE_STYLES there, and its sound in chapters/shared/sound_orchestra/voices.js.</p>
     <p class="hint">Note names like G4, Bb4, F#3 (any octave: the bird moves them into its range). For the choir, the
       key of the first note above is used, as if the visitor had hummed in it.</p>
   </section>
@@ -60,8 +63,28 @@
     <h2>Microphone test <small>(listen_for_the_call.js)</small></h2>
     <div class="row">
       <button id="mic" type="button">Start listening</button>
+      <label>pitch-finder deciding <select id="finder">
+        <option value="autocorrelation">ours (autocorrelation)</option>
+        <option value="mcleod">pitchy (McLeod)</option>
+      </select></label>
       <label><input id="mic-mirror" type="checkbox" checked> mirror wrong notes</label>
     </div>
+    <p class="hint">Both pitch-finders listen to the very same sound; the one chosen above decides the notes. Change
+      it while stopped. To make the page use one: PITCH_FINDER at the top of listen_for_the_call.js.</p>
+    <table class="compare">
+      <thead><tr><th></th><th>ours (autocorrelation)</th><th>pitchy (McLeod)</th></tr></thead>
+      <tbody>
+        <tr><td>pitch now</td><td id="c-ours-pitch">–</td><td id="c-mcleod-pitch">–</td></tr>
+        <tr><td>clarity now</td><td id="c-ours-clarity">–</td><td id="c-mcleod-clarity">–</td></tr>
+        <tr><td>found a pitch</td><td id="c-ours-found">–</td><td id="c-mcleod-found">–</td></tr>
+        <tr><td>steadiness while holding a note</td><td id="c-ours-steady">–</td><td id="c-mcleod-steady">–</td></tr>
+        <tr><td>octave slips</td><td id="c-ours-slips">–</td><td id="c-mcleod-slips">–</td></tr>
+        <tr><td>work per frame</td><td id="c-ours-ms">–</td><td id="c-mcleod-ms">–</td></tr>
+      </tbody>
+    </table>
+    <p class="hint">"found a pitch": of the moments loud enough to be singing. "steadiness": how much the pitch wobbles
+      from one moment to the next when it should be one note (cents; smaller is steadier). "octave slips": sudden jumps
+      of about 12 semitones. <button id="reset-compare" type="button">reset</button></p>
     <div id="readout" class="readout">
       <div><b>pitch</b> <span id="r-pitch">–</span></div>
       <div><b>clarity</b> <span id="r-clarity">–</span></div>

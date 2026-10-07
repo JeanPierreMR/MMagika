@@ -16,7 +16,7 @@
 // What changes:    the site remembers the vault is open (so the next chapter can be entered).
 
 import { makeRandom } from "../shared/looks_random.js";
-import { cue, stopCue } from "../shared/sound_orchestra/orchestra.js";
+import { cue, fadeEverythingOut, stopCue } from "../shared/sound_orchestra/orchestra.js";
 import { playClank, playVaultOpening } from "../shared/sounds.js";
 import { tellTheSite } from "../shared/tell_the_site.js";
 import { makeDials } from "./combination_dials.js";
@@ -24,7 +24,8 @@ import { makeDials } from "./combination_dials.js";
 // The dials, left to right: D = a dial of digits (0–9), L = a dial of letters (A–Z).
 // The combination itself is only known to the site (VAULT_COMBINATION, site_security/security_settings.py).
 const DIAL_KINDS = "DDLLDDDDDDDD";
-const OPENING_TIME = 4000;      // ms from "right" to the next chapter (the view is white by then); see vault.css
+const OPENING_TIME = 4000;      // ms from "right" until the view is white; see vault.css
+const HANDOVER_TIME = 1600;     // ms then: the sound fades out and the white fades to dark, before the next chapter
 
 const scene = document.getElementById("vault-scene");
 const status = document.getElementById("lock-status");
@@ -91,7 +92,13 @@ async function tryTheCombination() {
     playVaultOpening();
     stopCue("vault.room", { fade: 2.5 });       // the room's wind gives way to the opening
     scene.classList.add("is-opening");
-    setTimeout(() => window.location.assign(answer.next), motionIsReduced ? 600 : OPENING_TIME);
+    // Once all is white: the sound fades out and the white fades to dark, then the next chapter opens
+    // (and fades in from dark), so the handover feels seamless.
+    setTimeout(() => {
+      fadeEverythingOut(HANDOVER_TIME / 1000);
+      scene.classList.add("is-handing-over");
+      setTimeout(() => window.location.assign(answer.next), HANDOVER_TIME);
+    }, motionIsReduced ? 600 : OPENING_TIME);
     return;
   }
   playClank();

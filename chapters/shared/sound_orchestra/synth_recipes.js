@@ -147,50 +147,84 @@ export function clank(audio, out, { when }) {
   return { length: 3.5 };
 }
 
-// The vault opens: heavy bolts slide back, a deep swell rises, then a bright airy shimmer as the light
-// from inside blinds the view, and everything fades out into the white (matches vault.css "Opening").
+// The vault opens: the oxidized door cracks free (rust snapping and crunching, a low groan of metal),
+// then air rushes out with a long WHOOSH as the light floods the view, fading into the white
+// (timings match vault.css "Opening"). Change the numbers below to reshape it.
+const CRACKS = { from: 0.1, to: 2.0, count: 34 };      // seconds: the rust cracking, and how many cracks
+const GROAN = { from: 0.4, to: 2.4, pitch: [210, 150] }; // the door's low metal groan: when, and its slide (Hz)
+const WHOOSH = { from: 1.4, peak: 2.7, to: 4.6, sweep: [250, 3800] };   // the air rushing out: when, and its sweep (Hz)
+
 export function vaultOpen(audio, out, { when }) {
-  for (let i = 0; i < 4; i++) {                                     // the bolts
-    tone(audio, out, { when: when + i * 0.22, pitch: 90, duration: 0.3, volume: 0.3, wave: "triangle", slideTo: 55 });
-    noiseBurst(audio, out, { when: when + i * 0.22, duration: 0.18, volume: 0.25, type: "bandpass", frequency: 600, q: 2, seed: 20 + i });
-  }
-  noiseBurst(audio, out, { when: when + 1.1, duration: 2.2, volume: 0.1, type: "bandpass", frequency: 380, q: 9, seed: 25 });   // the creak
-
   const hall = makeHall(audio, 3.5, 21);
-  const wet = makeGain(audio, 0.6);
-  hall.connect(wet).connect(out);
+  hall.connect(makeGain(audio, 0.6)).connect(out);
+  const random = makeRandom(27);
 
-  // The deep swell: rises from the weight of the door into the light.
-  const swell = audio.createOscillator();
-  swell.frequency.setValueAtTime(48, when + 1.0);
-  swell.frequency.exponentialRampToValueAtTime(110, when + 3.4);
-  const swellLevel = makeGain(audio, SILENT);
-  swellLevel.gain.setValueAtTime(SILENT, when + 1.0);
-  swellLevel.gain.exponentialRampToValueAtTime(0.28, when + 2.6);
-  swellLevel.gain.exponentialRampToValueAtTime(SILENT, when + 4.4);
-  swell.connect(swellLevel).connect(out);
-  swellLevel.connect(hall);
-  swell.start(when + 1.0);
-  swell.stop(when + 4.5);
-
-  // The shimmer: a bright, quivering chord, fading in as the light floods out.
-  for (const [i, pitch] of [1760, 2217.5, 2637, 3520, 4434.9].entries()) {
-    const voice = audio.createOscillator();
-    voice.frequency.value = pitch;
-    const quiver = makeWobble(audio, 5 + i * 0.7, 0.4);
-    const level = makeGain(audio, SILENT);
-    quiver.amount.connect(level.gain);
-    level.gain.setValueAtTime(SILENT, when + 1.8);
-    level.gain.exponentialRampToValueAtTime(0.03, when + 3.0);
-    level.gain.exponentialRampToValueAtTime(SILENT, when + 4.4);
-    voice.connect(level).connect(hall);
-    voice.start(when + 1.8);
-    quiver.oscillator.start(when + 1.8);
-    voice.stop(when + 4.5);
-    quiver.oscillator.stop(when + 4.5);
+  // A couple of heavy clunks as it gives (the bolts).
+  for (const [at, pitch] of [[0, 85], [0.35, 70]]) {
+    tone(audio, out, { when: when + at, pitch, duration: 0.3, volume: 0.28, wave: "triangle", slideTo: 50 });
+    noiseBurst(audio, out, { when: when + at, duration: 0.15, volume: 0.2, type: "lowpass", frequency: 700, seed: 20 });
   }
-  // Air rushing out with the light.
-  noiseBurst(audio, hall, { when: when + 2.2, duration: 2.0, volume: 0.05, type: "highpass", frequency: 5000, seed: 26 });
+
+  // The rust cracking: short snaps of crunchy noise, thicker in the middle, some with a tiny metallic ping.
+  for (let i = 0; i < CRACKS.count; i++) {
+    const share = random();
+    const at = when + CRACKS.from + (CRACKS.to - CRACKS.from) * (0.5 + (share - 0.5) * Math.abs(share * 2 - 1));
+    const size = 0.008 + random() * 0.035;
+    const snap = makeGain(audio, 1);
+    snap.connect(out);
+    snap.connect(hall);
+    noiseBurst(audio, snap, { when: at, duration: size, volume: 0.12 + random() * 0.22, type: "bandpass",
+      frequency: 900 + random() * 3800, q: 1.5 + random() * 4, seed: 300 + i });
+    if (random() < 0.3) tone(audio, snap, { when: at, pitch: 1200 + random() * 2400, duration: 0.05 + random() * 0.08, volume: 0.02, wave: "triangle", attack: 0.002 });
+  }
+
+  // The low groan of the metal: a narrow, resonant band of noise sliding slowly down.
+  const groan = noiseSource(audio, 3, 28);
+  const groanBand = makeFilter(audio, "bandpass", GROAN.pitch[0], 14);
+  groanBand.frequency.setValueAtTime(GROAN.pitch[0], when + GROAN.from);
+  groanBand.frequency.exponentialRampToValueAtTime(GROAN.pitch[1], when + GROAN.to);
+  const groanLevel = makeGain(audio, SILENT);
+  groanLevel.gain.setValueAtTime(SILENT, when + GROAN.from);
+  groanLevel.gain.exponentialRampToValueAtTime(0.5, when + GROAN.from + 0.4);
+  groanLevel.gain.exponentialRampToValueAtTime(SILENT, when + GROAN.to);
+  groan.connect(groanBand).connect(groanLevel);
+  groanLevel.connect(out);
+  groanLevel.connect(hall);
+  groan.start(when + GROAN.from);
+  groan.stop(when + GROAN.to + 0.1);
+
+  // The whoosh: air rushing out, a wide band of noise sweeping up, swelling and fading into the white,
+  // moving from one side to the other.
+  const air = noiseSource(audio, 5, 29);
+  const airBand = makeFilter(audio, "bandpass", WHOOSH.sweep[0], 0.8);
+  airBand.frequency.setValueAtTime(WHOOSH.sweep[0], when + WHOOSH.from);
+  airBand.frequency.exponentialRampToValueAtTime(WHOOSH.sweep[1], when + WHOOSH.to);
+  const airLevel = makeGain(audio, SILENT);
+  airLevel.gain.setValueAtTime(SILENT, when + WHOOSH.from);
+  airLevel.gain.exponentialRampToValueAtTime(0.35, when + WHOOSH.peak);
+  airLevel.gain.exponentialRampToValueAtTime(SILENT, when + WHOOSH.to);
+  const side = audio.createStereoPanner ? audio.createStereoPanner() : makeGain(audio, 1);
+  if (side.pan) {
+    side.pan.setValueAtTime(-0.6, when + WHOOSH.from);
+    side.pan.linearRampToValueAtTime(0.5, when + WHOOSH.to);
+  }
+  air.connect(airBand).connect(airLevel).connect(side);
+  side.connect(out);
+  side.connect(hall);
+  air.start(when + WHOOSH.from);
+  air.stop(when + WHOOSH.to + 0.1);
+
+  // Under it all, a soft deep swell as the light pours out.
+  const swell = audio.createOscillator();
+  swell.frequency.setValueAtTime(48, when + 1.4);
+  swell.frequency.exponentialRampToValueAtTime(96, when + 3.6);
+  const swellLevel = makeGain(audio, SILENT);
+  swellLevel.gain.setValueAtTime(SILENT, when + 1.4);
+  swellLevel.gain.exponentialRampToValueAtTime(0.18, when + 2.8);
+  swellLevel.gain.exponentialRampToValueAtTime(SILENT, when + 4.4);
+  swell.connect(swellLevel).connect(hall);
+  swell.start(when + 1.4);
+  swell.stop(when + 4.5);
   return { length: 5.5 };
 }
 
@@ -264,53 +298,6 @@ function distantChirp(audio, out, when, random) {
   }
 }
 
-// A wrong tune turns dark: as the bird's last note sinks, low voices join one by one underneath (like a
-// low choir singing "ooh"), building a dark chord, then their lines glide together into one low note,
-// which fades in a large dark space. Change the voices in LOW_CHOIR.
-//   from: the note a voice joins on (hertz), joins: seconds after the start it fades in.
-//   All of them meet on MEET_ON at MEET_AT seconds, hold, and fade by FADE_BY.
-const LOW_CHOIR = [
-  { from: 73.42, joins: 0.0 },    // D2, the ground
-  { from: 110.0, joins: 0.6 },    // A2, above
-  { from: 87.31, joins: 1.2 },    // F2, the minor third: dark
-  { from: 58.27, joins: 1.8 },    // B♭1, below: darker still
-];
-const MEET_ON = 73.42;            // D2: where every voice ends up
-const MEET_AT = [2.8, 3.8];       // seconds: the lines start gliding together, and have met
-const FADE_BY = 5.2;
-const OOH = [[320, 5, 1], [780, 6, 0.35]];   // the "ooh" vowel's resonances: [hertz, sharpness, strength]
-
-export function darkTurn(audio, out, { when }) {
-  const hall = makeHall(audio, 4, 51);
-  hall.connect(makeGain(audio, 0.7)).connect(out);
-  const voices = makeGain(audio, 1);
-  OOH.forEach(([frequency, q, strength]) => {
-    voices.connect(makeFilter(audio, "bandpass", frequency, q)).connect(makeGain(audio, strength * 3)).connect(out);
-  });
-  voices.connect(makeFilter(audio, "lowpass", 260, 0.7)).connect(makeGain(audio, 0.6)).connect(out);   // the body
-  voices.connect(hall);
-
-  LOW_CHOIR.forEach(({ from, joins }, number) => {
-    for (const detune of [-6, 6]) {                       // each voice: two slightly different singers
-      const singer = audio.createOscillator();
-      singer.type = "sawtooth";
-      singer.detune.value = detune + number * 2;
-      singer.frequency.setValueAtTime(from, when);
-      singer.frequency.setValueAtTime(from, when + MEET_AT[0]);
-      singer.frequency.exponentialRampToValueAtTime(MEET_ON, when + MEET_AT[1]);   // the lines join into one
-      const level = makeGain(audio, SILENT);
-      level.gain.setValueAtTime(SILENT, when + joins);
-      level.gain.exponentialRampToValueAtTime(0.05, when + joins + 0.5);
-      level.gain.setValueAtTime(0.05, when + MEET_AT[1]);
-      level.gain.exponentialRampToValueAtTime(SILENT, when + FADE_BY);
-      singer.connect(level).connect(voices);
-      singer.start(when + joins);
-      singer.stop(when + FADE_BY + 0.1);
-    }
-  });
-  return { length: FADE_BY + 0.5 };
-}
-
 // ---- The terminal ------------------------------------------------------------------------------
 
 // The machine's electrical hum while the kernel panics.
@@ -328,18 +315,64 @@ export function panicHum(audio, out) {
   return keepGoing(audio, [buzz, harmonic, hiss]);
 }
 
-// A crackle of static (glitches).
-let staticSeed = 70;
+// A glitch: each time one of four kinds, picked by a "looks random" pattern (the same on every visit):
+//   static   a burst of hiss
+//   stutter  digital chopping: the sound cut on and off very fast, like a broken signal
+//   squeal   a radio squeal: a tone sweeping fast through static
+//   data     a burst of tiny random-pitched blips, like data spilling out
+// "duration" (seconds) comes from the page.
+const glitchRandom = makeRandom(70);
+const GLITCH_KINDS = ["static", "stutter", "squeal", "data"];
+let glitchSeed = 70;
 export function staticCrackle(audio, out, { when, duration = 0.25 }) {
-  noiseBurst(audio, out, { when, duration, volume: 0.12, type: "highpass", frequency: 2500, seed: staticSeed++ % 8 + 70 });
+  const kind = GLITCH_KINDS[Math.floor(glitchRandom() * GLITCH_KINDS.length)];
+  const seed = (glitchSeed++ % 8) + 70;
+  if (kind === "static") {
+    noiseBurst(audio, out, { when, duration, volume: 0.12, type: "highpass", frequency: 2500, seed });
+  } else if (kind === "stutter") {
+    const chop = audio.createGain();
+    chop.gain.value = 0;
+    const lfo = audio.createOscillator();
+    lfo.type = "square";
+    lfo.frequency.value = 35 + glitchRandom() * 50;
+    lfo.connect(chop.gain);
+    chop.connect(out);
+    noiseBurst(audio, chop, { when, duration, volume: 0.16, type: "bandpass", frequency: 1200 + glitchRandom() * 2500, q: 2, seed });
+    tone(audio, chop, { when, pitch: 180 + glitchRandom() * 400, duration, volume: 0.05, wave: "square", attack: 0.002 });
+    lfo.start(when);
+    lfo.stop(when + duration + 0.05);
+  } else if (kind === "squeal") {
+    const from = 900 + glitchRandom() * 1500;
+    tone(audio, out, { when, pitch: from, duration, volume: 0.035, slideTo: from * (glitchRandom() < 0.5 ? 0.4 : 2.2), attack: 0.005 });
+    noiseBurst(audio, out, { when, duration, volume: 0.07, type: "highpass", frequency: 1800, seed });
+  } else {
+    const blips = Math.max(3, Math.round(duration / 0.025));
+    for (let i = 0; i < blips; i++) {
+      tone(audio, out, { when: when + i * (duration / blips), pitch: 600 + glitchRandom() * 3000, duration: 0.018, volume: 0.03, wave: "square", attack: 0.001 });
+    }
+  }
   return { length: duration };
 }
 
-// A soft keystroke (the terminal typing).
+// A keystroke: two kinds, mixed (a "looks random" pattern): a soft plastic tap, or a crisper mechanical
+// click (a little thud under a sharp tick).
 const keyRandom = makeRandom(80);
 export function keystroke(audio, out, { when }) {
-  noiseBurst(audio, out, { when, duration: 0.02, volume: 0.04, type: "bandpass", frequency: 1800 + keyRandom() * 500, q: 2, seed: 81 });
-  return { length: 0.03 };
+  if (keyRandom() < 0.6) {
+    noiseBurst(audio, out, { when, duration: 0.02, volume: 0.04, type: "bandpass", frequency: 1800 + keyRandom() * 500, q: 2, seed: 81 });
+  } else {
+    noiseBurst(audio, out, { when, duration: 0.012, volume: 0.05, type: "highpass", frequency: 3500 + keyRandom() * 1500, seed: 82 });
+    tone(audio, out, { when, pitch: 140 + keyRandom() * 60, duration: 0.03, volume: 0.04, wave: "triangle", attack: 0.002 });
+  }
+  return { length: 0.04 };
+}
+
+// The terminal's beep while its cursor waits: short, soft and square, like an old computer.
+export function terminalBeep(audio, out, { when }) {
+  const soft = makeFilter(audio, "lowpass", 2800, 0.7);
+  soft.connect(out);
+  tone(audio, soft, { when, pitch: 1320, duration: 0.07, volume: 0.05, wave: "square", attack: 0.004 });
+  return { length: 0.1 };
 }
 
 // "Welcome Doctor": one soft, glassy chord that swells in and fades slowly.

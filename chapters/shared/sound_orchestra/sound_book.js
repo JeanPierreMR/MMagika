@@ -33,28 +33,23 @@ export const SOUND_BOOK = {
   },
   "vault.wrong": {
     kind: "once", where: "a wrong combination: the metal hits its stop, a low clank ringing in the room",
-    file: null, synth: "clank", volume: 0.7,
+    file: "audio/vault_wrong.mp3", synth: "clank", volume: 0.7,   // "Metal Impact Creak Resonant" (audio/README.md)
   },
   "vault.open": {
-    kind: "once", where: "the right combination: bolts, a deep swell, the light's shimmer, fading into white",
-    file: null,             // e.g. "audio/vault_open.ogg": a heavy door and a rising swell (~5 s)
+    kind: "once", where: "the right combination: the rusted door cracks free, then air rushes out in a whoosh, fading into white",
+    file: "audio/vault_open.mp3",   // "Creaking Metal - Slow" + "floating whoosh slow", cut and faded (audio/README.md)
     synth: "vaultOpen", volume: 0.9,
   },
 
   // ---- 2. The signal -------------------------------------------------------------------------
   "signal.forest": {
     kind: "bed", where: "/signal, once the microphone is on; it fades out with the page going dark",
-    file: null,             // e.g. "audio/forest.ogg": a forest at dawn, distant birds
+    file: "audio/forest.mp3",   // "Jungle / Forest Ambience", a seamless 37.5 s loop (audio/README.md)
     synth: "forestBed", volume: 0.5, fadeIn: 4, fadeOut: 2, loop: true,
   },
   "signal.bird": {
-    kind: "voice", where: "the mockingjay: birds joining into one call for the right call, and mirroring wrong tunes (bird_song.js)",
+    kind: "voice", where: "the mockingjay and the other birds: the choir for the right call, and the mirrored wrong tune (bird_song.js)",
     volume: 0.22,
-  },
-  "signal.wrong": {
-    kind: "once", where: "after the bird mirrors 4 notes that aren't the call: low voices join into a dark chord, then one low note",
-    file: null,             // e.g. "audio/wrong_dark.ogg": a low cello/drone phrase (~4 s)
-    synth: "darkTurn", volume: 0.55,
   },
 
   // ---- 3. The terminal -----------------------------------------------------------------------
@@ -64,11 +59,15 @@ export const SOUND_BOOK = {
   },
   "terminal.static": {
     kind: "once", where: "glitches and the crash (how long: given by the terminal)",
-    file: null, synth: "staticCrackle", volume: 1,
+    file: "audio/radio_static.mp3", synth: "staticCrackle", volume: 0.7,   // "Radio tuning-static-interference": each glitch plays a short slice
   },
   "terminal.keys": {
     kind: "once", where: "the terminal typing",
-    file: null, synth: "keystroke", volume: 1,
+    file: "audio/key_click.mp3", synth: "keystroke", volume: 0.16,   // "Click 01 Minimal UI Sounds" (audio/README.md)
+  },
+  "terminal.beep": {
+    kind: "once", where: "the terminal's cursor waiting between lines: a soft beep with each blink (KND)",
+    file: null, synth: "terminalBeep", volume: 0.6,
   },
   "terminal.welcome": {
     kind: "once", where: "\"Welcome Doctor\" appears",
@@ -79,7 +78,7 @@ export const SOUND_BOOK = {
   "letter.choir": {
     kind: "bed", where: "/letter, as the page fades in from black, to the end",
     file: null,             // e.g. "audio/choir.ogg": angels singing, a soft choir or ethereal pad
-    synth: "choirBed", volume: 0.55, fadeIn: 6, fadeOut: 4, loop: true,
+    synth: "choirBed", volume: 1, fadeIn: 6, fadeOut: 4, loop: true,
   },
   "letter.seal": {
     kind: "once", where: "the wax seal bursts: a warm, low bloom",
@@ -87,6 +86,6 @@ export const SOUND_BOOK = {
   },
   "letter.glitch": {
     kind: "once", where: "the connection fails for a moment (the choir also dips)",
-    file: null, synth: "staticCrackle", volume: 0.5, options: { duration: 0.12 },
+    file: "audio/radio_static.mp3", synth: "staticCrackle", volume: 0.5, options: { duration: 0.12 },
   },
 };

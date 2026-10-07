@@ -3,12 +3,12 @@
 
 import { MASTER_VOLUME, SOUND_BOOK } from "/chapters/shared/sound_orchestra/sound_book.js";
 import { cue, fadeAll, followVolume, forgetRecording, isPlaying, setMasterVolume, soundSystem, stopCue } from "/chapters/shared/sound_orchestra/orchestra.js";
-import { notesFromVoice, singNotes, singTheCall, singTheChoir, songLength } from "/chapters/signal/bird_song.js";
-import { CALL_SHAPE, CALL_TIMING, compareWithTheCall, makeNoteTracker, semitonesOf, startListening } from "/chapters/signal/listen_for_the_call.js";
+import { CHOIR_VOICE, MIXED_VOICES, VOICES, mirrorTheWrongTune, notesFromVoice, singTheCall, singTheChoir, wrongTuneLength } from "/chapters/signal/bird_song.js";
+import { MINOR, chord, harmonize } from "/chapters/shared/sound_orchestra/harmony.js";
+import { CALL_SHAPE, CALL_TIMING, PITCH_FINDER, PITCH_FINDERS, compareWithTheCall, makeNoteTracker, semitonesOf, startListening } from "/chapters/signal/listen_for_the_call.js";
 
 const $ = (id) => document.getElementById(id);
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const WRONG_TIME = 5700;            // as in signal.js
 
 // ---- Note names <-> pitches ---------------------------------------------------------------------
 const NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
@@ -51,6 +51,22 @@ $("copy").addEventListener("click", () => copy(
   "Copied every cue: paste them over the entries in sound_book.js",
 ));
 
+// ---- Candidates: recordings found online, listed in sound_orchestra/SOUND_CANDIDATES.md ----------
+// Played straight from Freesound's preview (nothing downloaded). Columns: cue | title | author | license | page | preview.
+let candidates = {};
+async function loadCandidates() {
+  try {
+    const text = await (await fetch("/chapters/shared/sound_orchestra/SOUND_CANDIDATES.md", { cache: "no-store" })).text();
+    candidates = {};
+    for (const line of text.split("\n")) {
+      const cells = line.split("|").map((cell) => cell.trim());
+      if (cells.length < 8 || !/^https:\/\//.test(cells[6])) continue;
+      const [, cue, title, author, license, page, preview] = cells;
+      (candidates[cue] ??= []).push({ title, author, license, page, preview });
+    }
+  } catch { candidates = {}; }
+}
+
 // ---- The recordings in sound_orchestra/audio/ (through the lab's helper) ------------------------
 let recordings = [];
 let canUpload = false;
@@ -72,6 +88,16 @@ function fillSoundChoices(select) {
   if (entry.synth) select.add(new Option(`placeholder: ${entry.synth}`, ""));
   else select.add(new Option("(none)", ""));
   for (const name of recordings) select.add(new Option(`audio/${name}`, `audio/${name}`));
+  if (candidates[select.dataset.cue]?.length) {
+    const group = document.createElement("optgroup");
+    group.label = "candidates (Freesound preview, not downloaded)";
+    for (const found of candidates[select.dataset.cue]) {
+      const option = new Option(`${found.title} — ${found.author} (${found.license})`, found.preview);
+      option.title = found.page;
+      group.append(option);
+    }
+    select.add(group);
+  }
   if (entry.file && !recordings.includes(entry.file.replace(/^audio\//, ""))) select.add(new Option(`${entry.file} (missing!)`, entry.file));
   select.value = entry.file || "";
 }
@@ -99,7 +125,7 @@ $("upload-file").addEventListener("change", async () => {
   if (!response || !response.ok) { $("copied").textContent = `Upload failed: ${answer.error || "is lab_server.py running?"}`; return; }
   forgetRecording(answer.file);
   await loadRecordingList();
-  const select = document.querySelector(`select.sound[data-cue="${uploadingFor}"]`);
+  const select = document.querySelector(`select.sound[data-cue="${uploadingFor}"]`);   // (candidates stay listed)
   select.value = answer.file;
   useSound(uploadingFor, answer.file);
   $("copied").textContent = `Saved ${answer.file}: now playing for ${uploadingFor}. "copy" its settings to keep it.`;
@@ -174,7 +200,7 @@ for (const [name, entry] of Object.entries(SOUND_BOOK)) {
   row.append(...cells);
   $("cues").tBodies[0].append(row);
 }
-loadRecordingList();
+loadCandidates().then(loadRecordingList);
 
 // ---- The mockingjay ------------------------------------------------------------------------------
 function typedNotes() {
@@ -186,16 +212,14 @@ function typedNotes() {
 function asHeard(notes) {
   return notes.map((note, i) => ({ semitone: semitonesOf(note.pitch), start: i, end: i + 0.5 }));
 }
-async function mirrorThenDark(notes) {
-  singNotes(notes, { fallAtEnd: true });
-  await wait((songLength(notes) - 1.6) * 1000);
-  await cue("signal.wrong");
-}
-$("sing-call").addEventListener("click", () => { soundSystem(); singTheCall(); });
-$("sing-choir").addEventListener("click", () => { soundSystem(); const notes = typedNotes(); singTheChoir(notes ? asHeard(notes) : null); });
-$("sing-mirror").addEventListener("click", () => { soundSystem(); const notes = typedNotes(); if (notes) singNotes(notes, { fallAtEnd: true }); });
-$("dark-turn").addEventListener("click", () => { soundSystem(); cue("signal.wrong"); });
-$("mirror-and-dark").addEventListener("click", () => { soundSystem(); const notes = typedNotes(); if (notes) mirrorThenDark(notes); });
+// Who sings: every voice in voices.js; starts on the page's choice (CHOIR_VOICE).
+for (const [name, voice] of Object.entries(VOICES)) $("voice").add(new Option(voice.label, name));
+for (const [name, mix] of Object.entries(MIXED_VOICES)) $("voice").add(new Option(mix.label, name));
+$("voice").value = CHOIR_VOICE;
+const chosenVoice = () => $("voice").value;
+$("sing-call").addEventListener("click", () => { soundSystem(); singTheCall(null, chosenVoice()); });
+$("sing-choir").addEventListener("click", () => { soundSystem(); const notes = typedNotes(); singTheChoir(notes ? asHeard(notes) : null, null, chosenVoice()); });
+$("sing-mirror").addEventListener("click", () => { soundSystem(); const notes = typedNotes(); if (notes) mirrorTheWrongTune(notes, null, chosenVoice()); });
 
 // ---- The microphone test -------------------------------------------------------------------------
 $("r-target").textContent = CALL_SHAPE.map((jump) => (jump > 0 ? "+" : "") + jump.toFixed(1)).join("  ");
@@ -217,9 +241,50 @@ function showReport(report) {
   }
 }
 
+// ---- Comparing the two pitch-finders on the same sound --------------------------------------------
+$("finder").value = PITCH_FINDER;
+const LOUD_ENOUGH = 0.015;                   // a moment this loud counts as "singing" for the comparison
+const freshTally = () => ({ loud: 0, found: 0, steps: [], slips: 0, last: null, ms: 0, frames: 0 });
+let tally = { autocorrelation: freshTally(), mcleod: freshTally() };
+$("reset-compare").addEventListener("click", () => { tally = { autocorrelation: freshTally(), mcleod: freshTally() }; });
+
+function countIn(t, reading) {
+  if (reading.loudness < LOUD_ENOUGH) { t.last = null; return; }
+  t.loud++;
+  if (!reading.pitch) { t.last = null; return; }
+  t.found++;
+  const semitone = semitonesOf(reading.pitch);
+  if (t.last !== null) {
+    const jump = Math.abs(semitone - t.last);
+    if (Math.abs(jump - 12) < 0.7) t.slips++;
+    else if (jump < 0.8) { t.steps.push(jump * 100); if (t.steps.length > 400) t.steps.shift(); }   // within one note
+  }
+  t.last = semitone;
+}
+function showTally(key, reading, t) {
+  const id = key === "autocorrelation" ? "ours" : "mcleod";
+  $(`c-${id}-pitch`).textContent = reading?.pitch ? `${reading.pitch.toFixed(1)} Hz · ${nameOf(semitonesOf(reading.pitch))}` : "–";
+  $(`c-${id}-clarity`).textContent = reading?.clarity ? reading.clarity.toFixed(2) : "–";
+  $(`c-${id}-found`).textContent = t.loud ? `${Math.round((100 * t.found) / t.loud)}%` : "–";
+  $(`c-${id}-steady`).textContent = t.steps.length ? `${(t.steps.reduce((a, b) => a + b, 0) / t.steps.length).toFixed(1)}¢` : "–";
+  $(`c-${id}-slips`).textContent = String(t.slips);
+  $(`c-${id}-ms`).textContent = t.frames ? `${(t.ms / t.frames).toFixed(2)} ms` : "–";
+}
+// How long each finder takes, measured on the same slice now and then (it's cheap to measure).
+const timingSlice = new Float32Array(2048);
+function timeBoth(sampleRate) {
+  for (let i = 0; i < timingSlice.length; i++) timingSlice[i] = Math.sin((2 * Math.PI * 220 * i) / sampleRate) * 0.3;
+  for (const [key, find] of Object.entries(PITCH_FINDERS)) {
+    const began = performance.now();
+    find(timingSlice, sampleRate);
+    tally[key].ms += performance.now() - began;
+    tally[key].frames++;
+  }
+}
+
 let micListening = null;
 $("mic").addEventListener("click", async () => {
-  if (micListening) { micListening.stop(); micListening = null; $("mic").textContent = "Start listening"; return; }
+  if (micListening) { micListening.stop(); micListening = null; $("mic").textContent = "Start listening"; $("finder").disabled = false; return; }
   const audio = soundSystem();
   let stream;
   try {
@@ -232,22 +297,37 @@ $("mic").addEventListener("click", async () => {
   $("mic").textContent = "Stop listening";
   logEvent("listening… hum or whistle the call");
   let mirroring = false;
+  const deciding = $("finder").value;
+  const other = deciding === "mcleod" ? "autocorrelation" : "mcleod";
+  $("finder").disabled = true;
+  logEvent(`the notes are decided by ${deciding === "mcleod" ? "pitchy (McLeod)" : "ours (autocorrelation)"}`);
+  let frame = 0;
   micListening = startListening(audio, stream, {
-    onFrame: showReport,
+    pitchFinder: deciding,
+    alsoTry: other,
+    onFrame: (report) => {
+      showReport(report);
+      countIn(tally[deciding], report);
+      countIn(tally[other], report.other);
+      if (frame++ % 15 === 0) timeBoth(audio.sampleRate);
+      showTally(deciding, report, tally[deciding]);
+      showTally(other, report.other, tally[other]);
+    },
     onHeard: async (heard) => {
       logEvent(`✓ the call! ${heard.map((note) => nameOf(note.semitone)).join(" ")} (the birds answer)`, "heard");
       micListening = null;
       $("mic").textContent = "Start listening";
-      await singTheChoir(heard);
+      $("finder").disabled = false;
+      await singTheChoir(heard, null, chosenVoice());
     },
     onMirror: async (heard) => {
       logEvent(`four other notes: ${heard.map((note) => nameOf(note.semitone)).join(" ")}`, "mirror");
       if (!$("mic-mirror").checked || mirroring) return;
       mirroring = true;
       const notes = notesFromVoice(heard);
-      micListening?.pauseFor(350 + songLength(notes) * 1000 + WRONG_TIME);   // don't hear the bird
+      micListening?.pauseFor(350 + wrongTuneLength(notes) * 1000);   // don't hear the bird or the low voices
       await wait(350);
-      await mirrorThenDark(notes);
+      await mirrorTheWrongTune(notes, null, chosenVoice());
       mirroring = false;
     },
   });
@@ -276,7 +356,43 @@ const callFrom = (start, offsets = [0, 0, 0]) => {      // the call's shape from
 };
 const fourNotes = (semitones, starts) => semitones.map((semitone, i) => ({ semitone, start: starts[i], end: starts[i] + 0.5 }));
 
+// Harmony: notes named the way a choir would (each within a few cents of the named note).
+const near = (hz, name) => Math.abs(1200 * Math.log2(hz / pitchOf(name))) < 5;
+const callIn = (tonic) => [783.99, 932.33, 880.0, 587.33].map((hz) => hz * tonic / 391.995);
+// Made-up sounds, 2048 samples at 48 kHz: a pure whistle, a hum (rich in overtones, weak fundamental), the
+// same hum with noise. Each finder must find the right note (within 30 cents).
+function madeUpSound(pitch, { overtones = 0, noise = 0 } = {}) {
+  const rate = 48000, slice = new Float32Array(2048);
+  let seed = 7;
+  const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1;
+  for (let i = 0; i < slice.length; i++) {
+    let v = Math.sin((2 * Math.PI * pitch * i) / rate) * (overtones ? 0.4 : 1);
+    for (let h = 2; h <= overtones; h++) v += Math.sin((2 * Math.PI * pitch * h * i) / rate) / h;
+    slice[i] = v * 0.2 + random() * noise;
+  }
+  return [slice, rate];
+}
+const findsNote = (finder, pitch, options) => {
+  const reading = PITCH_FINDERS[finder](...madeUpSound(pitch, options));
+  return reading.pitch && Math.abs(1200 * Math.log2(reading.pitch / pitch)) < 30;
+};
+const PITCH_CHECKS = ["autocorrelation", "mcleod"].flatMap((finder) => {
+  const who = finder === "mcleod" ? "pitchy" : "ours";
+  return [
+    [`${who}: a whistle at 1568 Hz (G6)`, () => findsNote(finder, 1568)],
+    [`${who}: a hum at 130.8 Hz (C3) with overtones`, () => findsNote(finder, 130.8, { overtones: 6 })],
+    [`${who}: a low hum at 98 Hz (G2) with overtones`, () => findsNote(finder, 98, { overtones: 8 })],
+    [`${who}: a hum at 196 Hz (G3) with overtones and noise`, () => findsNote(finder, 196, { overtones: 6, noise: 0.05 })],
+  ];
+});
+
 const CHECKS = [
+  ...PITCH_CHECKS,
+  ["harmony: a third above the call is B♭ D C F (in G minor)", () => callIn(391.995).map((hz) => harmonize(hz, 2, 391.995, MINOR)).every((hz, i) => near(hz, ["Bb5", "D6", "C6", "F5"][i]))],
+  ["harmony: a sixth below the call is B♭ D C F, an octave lower", () => callIn(391.995).map((hz) => harmonize(hz, -5, 391.995, MINOR)).every((hz, i) => near(hz, ["Bb4", "D5", "C5", "F4"][i]))],
+  ["harmony: an octave below is the call an octave lower", () => callIn(391.995).map((hz) => harmonize(hz, -7, 391.995, MINOR)).every((hz, i) => near(hz, ["G4", "Bb4", "A4", "D4"][i]))],
+  ["harmony: in another key (E minor) the third above is still in the key", () => callIn(329.63).map((hz) => harmonize(hz, 2, 329.63, MINOR)).every((hz, i) => near(hz, ["G5", "B5", "A5", "D5"][i]))],
+  ["harmony: a minor chord on D is D, A, F, and B♭ below", () => chord(pitchOf("D2"), [0, 4, 2, -2], MINOR).every((hz, i) => near(hz, ["D2", "A2", "F2", "Bb1"][i]))],
   ["the call, whistled in the original key", () => compareWithTheCall(fourNotes(callFrom(10), [0, 0.6, 1.2, 1.8])).isTheCall],
   ["the call, hummed low and 2 semitones off on each jump", () => compareWithTheCall(fourNotes(callFrom(-22, [2, -2, 2]), [0, 0.8, 1.6, 2.4])).isTheCall],
   ["a different tune is not the call", () => !compareWithTheCall(fourNotes([0, 5, 10, 15], [0, 0.8, 1.6, 2.4])).isTheCall],

@@ -17,6 +17,9 @@
 
 import { MASTER_VOLUME, SOUND_BOOK } from "./sound_book.js";
 import * as RECIPES from "./synth_recipes.js";
+import { makeRandom } from "../looks_random.js";
+
+const sliceRandom = makeRandom(404);
 
 const SILENT = 0.0001;
 const WAIT_TO_WAKE = 300;               // ms a one-off sound waits for the sound system to start
@@ -42,6 +45,14 @@ export function soundSystem() {
 export function masterOutput() {
   soundSystem();
   return master;
+}
+
+// Fade EVERYTHING out (beds and one-off sounds alike), e.g. as a page hands over to the next one.
+export function fadeEverythingOut(seconds = 1.5) {
+  const level = masterOutput().gain;
+  level.cancelScheduledValues(audio.currentTime);
+  level.setValueAtTime(level.value, audio.currentTime);
+  level.linearRampToValueAtTime(0, audio.currentTime + seconds);
 }
 
 export function setMasterVolume(volume) {
@@ -83,15 +94,30 @@ function loadRecording(file) {
   return recordings.get(address);
 }
 
-async function makeSound(entry, out, options) {
+async function makeSound(entry, out, callOptions) {
+  const options = { ...entry.options, ...callOptions };   // the sound book's settings, then the page's
   if (entry.file) {
     const recording = await loadRecording(entry.file);
     if (recording) {
       const source = audio.createBufferSource();
       source.buffer = recording;
       source.loop = entry.kind === "bed" || Boolean(entry.loop);
+      const when = Math.max(options.when, audio.currentTime);
+      // A one-off sound given a "duration" (e.g. a glitch) plays just that slice of the recording, from a
+      // different point each time (sliceRandom: the same pattern on every visit), with tiny fades.
+      if (entry.kind !== "bed" && options.duration && options.duration < recording.duration) {
+        const from = sliceRandom() * (recording.duration - options.duration);
+        const edges = audio.createGain();
+        edges.gain.setValueAtTime(0, when);
+        edges.gain.linearRampToValueAtTime(1, when + 0.01);
+        edges.gain.setValueAtTime(1, when + options.duration - 0.02);
+        edges.gain.linearRampToValueAtTime(0, when + options.duration);
+        source.connect(edges).connect(out);
+        source.start(when, from, options.duration);
+        return { length: options.duration, stop: (at = audio.currentTime) => { try { source.stop(at); } catch { /* done */ } } };
+      }
       source.connect(out);
-      source.start(Math.max(options.when, audio.currentTime));
+      source.start(when);
       return { length: recording.duration, stop: (at = audio.currentTime) => { try { source.stop(at); } catch { /* done */ } } };
     }
   }

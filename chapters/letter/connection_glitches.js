@@ -1,24 +1,25 @@
 // CONNECTION GLITCHES — every now and then the connection to the Dreamers seems to fail for a
-// moment, over the letter page.
+// moment, over the letter page. Small and quick: nothing ever covers the letter.
 //
-// What starts it:  letter.js, once the frame has drawn itself in.
+// What starts it:  letter.js, once the scroll opens.
 // What it does:    every GLITCH_EVERY (a "looks random" pause, the same on every visit), one or
 //                  two of these happen, for a fraction of a second:
-//                    halfDark  — the top, bottom, left or right half goes dark, crossed by green lines
-//                    grain     — the whole picture breaks into moving grain, tinted green
-//                    sweep     — a few bright green lines race across
+//                    lines  — a few thin vertical green lines flicker, here and there
+//                    sweep  — a few bright vertical green lines race across the screen
+//                    speck  — a small strip of green grain flickers somewhere
 //                  and the "CHANNEL SECURE" readout flickers to "SIGNAL DEGRADED".
 // What changes:    only what's on screen. Nothing runs between glitches (the layers are hidden).
-// How often, how long, which halves: the numbers just below.
+// How often, how long, how many: the numbers just below.
 
 import { makeRandom, pickOneOf } from "../shared/looks_random.js";
 import { cue, duck } from "../shared/sound_orchestra/orchestra.js";
 
-const GLITCH_EVERY = [5000, 13000];     // ms between glitches (somewhere in this range)
-const HALF_DARK_FOR = [180, 520];       // ms
-const GRAIN_FOR = [600, 1500];          // ms
-const SWEEP_FOR = 350;                  // ms; matches lines-sweep in connection_glitches.css
-const HALVES = ["top", "bottom", "left", "right"];
+const GLITCH_EVERY = [16000, 36000];    // ms between glitches (somewhere in this range): rare, but each one fast
+const LINES_FOR = [60, 160];            // ms the flickering lines stay
+const HOW_MANY_LINES = [2, 5];          // how many lines flicker at once
+const SPECK_FOR = [80, 200];            // ms the strip of grain stays
+const SPECK_SIZE = { width: [90, 240], height: [5, 16] };   // px
+const SWEEP_FOR = 180;                  // ms; matches lines-sweep in connection_glitches.css
 
 const random = makeRandom(404);
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -42,11 +43,11 @@ function makeGrainPicture() {
 
 export function startConnectionGlitches() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const halfDark = document.querySelector(".glitch-half-dark");
-  const grain = document.querySelector(".glitch-grain");
+  const lines = document.querySelector(".glitch-lines");
+  const speck = document.querySelector(".glitch-speck");
   const sweep = document.querySelector(".glitch-sweep");
   const status = document.querySelector(".readout.top-left .status-word");
-  grain.style.backgroundImage = `url("${makeGrainPicture()}")`;
+  speck.style.backgroundImage = `url("${makeGrainPicture()}")`;
 
   async function show(element, ms) {
     element.hidden = false;
@@ -55,11 +56,25 @@ export function startConnectionGlitches() {
   }
 
   const GLITCHES = {
-    halfDark: () => {
-      halfDark.dataset.half = pickOneOf(HALVES, random);
-      return show(halfDark, between(HALF_DARK_FOR));
+    lines: () => {
+      const count = Math.round(between(HOW_MANY_LINES));
+      lines.replaceChildren(...Array.from({ length: count }, () => {
+        const line = document.createElement("i");
+        line.style.left = `${random() * 100}%`;
+        line.style.width = `${1 + Math.floor(random() * 3)}px`;
+        line.style.opacity = 0.35 + random() * 0.6;
+        return line;
+      }));
+      return show(lines, between(LINES_FOR));
     },
-    grain: () => show(grain, between(GRAIN_FOR)),
+    speck: () => {
+      const width = between(SPECK_SIZE.width);
+      speck.style.width = `${width}px`;
+      speck.style.height = `${between(SPECK_SIZE.height)}px`;
+      speck.style.left = `calc(${random() * 100}% - ${width * random()}px)`;
+      speck.style.top = `${5 + random() * 90}%`;
+      return show(speck, between(SPECK_FOR));
+    },
     sweep: () => show(sweep, SWEEP_FOR),
   };
 
@@ -73,7 +88,7 @@ export function startConnectionGlitches() {
     await Promise.all(happening);
     if (random() < 0.3) {                          // sometimes it stutters straight back
       await wait(90);
-      await GLITCHES.halfDark();
+      await GLITCHES.lines();
     }
     status.textContent = "CHANNEL SECURE";
   }

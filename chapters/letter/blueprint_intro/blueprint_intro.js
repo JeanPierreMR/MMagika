@@ -75,10 +75,11 @@ function traceTheScroll(svg) {
   return at + DRAW_TIME;                                  // when the last line is finished
 }
 
-export async function playBlueprintIntro() {
+export async function playBlueprintIntro({ onOutlineGone = () => {} } = {}) {
   const intro = document.querySelector(".blueprint-intro");
   if (!intro) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {   // just a short fade from black
+    onOutlineGone();
     intro.style.setProperty("--reveal-time", "0.6s");
     intro.classList.add("is-revealing");
     await wait(600);
@@ -93,6 +94,7 @@ export async function playBlueprintIntro() {
   intro.classList.add("is-drawing");
   await wait(drawingTime + HOLD);
   intro.classList.add("is-fading-outline");
+  onOutlineGone();                                  // e.g. the choir starts here (letter.js)
   await wait(OUTLINE_FADE + BLACK_AGAIN);
   intro.classList.add("is-revealing");
   await wait(REVEAL_TIME);

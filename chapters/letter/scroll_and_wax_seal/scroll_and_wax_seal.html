@@ -32,7 +32,8 @@
       The wax seal. The drawing is kept in <defs> as "seal-art"; scroll_and_wax_seal.js cuts it
       into thin strips and bends them, so the wax looks pressed around the round roll.
     {% endcomment %}
-    <div class="wax-seal">
+    {# It's also a button: clicking it breaks the seal (letter.js); otherwise it opens by itself. #}
+    <div class="wax-seal" role="button" tabindex="0" aria-label="Break the seal">
       <svg viewBox="0 0 120 126" role="img" aria-label="A dark red wax seal stamped MD">
         <defs>
           <linearGradient id="seal-wax" x1=".1" y1="0" x2=".85" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#8e1a28"/><stop offset=".27" stop-color="#5c0b14"/><stop offset=".58" stop-color="#3f0710"/><stop offset=".83" stop-color="#5a0d17"/><stop offset="1" stop-color="#2a0308"/></linearGradient>

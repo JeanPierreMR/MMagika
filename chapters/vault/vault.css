@@ -352,6 +352,8 @@
   transition: opacity 0.8s ease-in 3s;
 }
 #vault-scene.is-opening .step-through { opacity: 1; }
+/* The handover (vault.js): the white fades to dark before the next chapter opens. */
+#vault-scene.is-handing-over .step-through { background: #04050a; transition: background-color 1.5s ease-in-out; }
 
 /* ---- Phones ------------------------------------------------------------------------------------ */
 @media (max-width: 600px) {

@@ -136,6 +136,10 @@
   filter: drop-shadow(0 1px 1px rgba(10, 0, 3, 0.8));
 }
 .wax-seal > svg { display: block; overflow: visible; width: 100%; height: 100%; }
+/* While sealed, the seal can be clicked to open the scroll (letter.js): a pointer, and a soft glow on hover. */
+.scroll.is-closed:not(.is-breaking) .wax-seal { pointer-events: auto; cursor: pointer; transition: filter .3s ease; }
+.scroll.is-closed:not(.is-breaking) .wax-seal:hover,
+.scroll.is-closed:not(.is-breaking) .wax-seal:focus-visible { outline: none; filter: drop-shadow(0 1px 1px rgba(10, 0, 3, 0.8)) drop-shadow(0 0 9px rgba(244, 212, 157, 0.55)); }
 
 /* Breaking: the seal glows gold and purple as the spell gathers in it... */
 .scroll.is-breaking .wax-seal { animation: seal-charges .85s ease-in-out forwards; }

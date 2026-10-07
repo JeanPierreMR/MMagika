@@ -34,7 +34,14 @@
 //    notes ends (PHRASE_END seconds of quiet) and it wasn't the call, onMirror gets its last four
 //    notes — at most once every MIRROR_COOLDOWN seconds, so it stays gentle.
 
+import { PitchDetector } from "../shared/vendor/pitchy/pitchy.js";
 import { THE_CALL } from "./bird_song.js";
+
+// WHICH PITCH-FINDER the page uses (step 1 below). Compare them live in the sound lab.
+//   "autocorrelation"  our own, described in step 1
+//   "mcleod"           the McLeod Pitch Method, from the pitchy library (shared/vendor/pitchy/): a refined
+//                      version of the same idea, built for tuners and singing; usually steadier on hums
+export const PITCH_FINDER = "mcleod";      // chosen after comparing in the lab: steadier and ~5× less work
 
 // How forgiving it is. Bigger numbers = easier.
 const CLARITY = 0.7;              // how clearly a sound must repeat to count as a pitch (a hum is breathy)
@@ -84,6 +91,25 @@ export function findPitch(samples, sampleRate) {
   }
   return { pitch: null, clarity: 0, loudness, curve };
 }
+
+// Step 1, the other way: the McLeod Pitch Method (pitchy). Same answer shape as findPitch, so either can
+// be used. Its "curve" is the method's own similarity curve (the normalised square difference), for the
+// drawing. Like ours, it only counts a pitch that is clear enough (CLARITY) and between 70 and 3500 Hz.
+const mcleodDetectors = new Map();          // one per slice length, made once
+export function findPitchMcLeod(samples, sampleRate) {
+  let energy = 0;
+  for (const s of samples) energy += s * s;
+  const loudness = Math.sqrt(energy / samples.length);
+  if (!mcleodDetectors.has(samples.length)) mcleodDetectors.set(samples.length, PitchDetector.forFloat32Array(samples.length));
+  const detector = mcleodDetectors.get(samples.length);
+  if (loudness < QUIETEST) return { pitch: null, clarity: 0, loudness, curve: null };
+  const [pitch, clarity] = detector.findPitch(samples, sampleRate);
+  const curve = detector._nsdfBuffer.slice(0, Math.floor(sampleRate / 70) + 2);
+  const usable = pitch >= 70 && pitch <= 3500 && clarity > CLARITY;
+  return { pitch: usable ? pitch : null, clarity: usable ? clarity : 0, loudness, curve };
+}
+
+export const PITCH_FINDERS = { autocorrelation: findPitch, mcleod: findPitchMcLeod };
 
 // Steps 3 and 4: do these four notes make the call? Returns how far off they are.
 export function compareWithTheCall(four) {
@@ -177,7 +203,11 @@ export function makeNoteTracker({ onHeard, onMirror = () => {} }) {
   };
 }
 
-export function startListening(audio, stream, { onFrame, onHeard, onMirror }) {
+// Options: pitchFinder "autocorrelation" or "mcleod" (default PITCH_FINDER); alsoTry: the other one too,
+// on the very same sound, for comparing (its reading comes in the frame report as "other").
+export function startListening(audio, stream, { onFrame, onHeard, onMirror, pitchFinder = PITCH_FINDER, alsoTry = null }) {
+  const findThePitch = PITCH_FINDERS[pitchFinder];
+  const findTheOther = alsoTry ? PITCH_FINDERS[alsoTry] : null;
   const microphone = audio.createMediaStreamSource(stream);
   const ears = audio.createAnalyser();
   ears.fftSize = 2048;
@@ -193,10 +223,11 @@ export function startListening(audio, stream, { onFrame, onHeard, onMirror }) {
   function listen() {
     if (!listening) return;
     ears.getFloatTimeDomainData(samples);
-    const reading = findPitch(samples, audio.sampleRate);
+    const reading = findThePitch(samples, audio.sampleRate);
     const now = audio.currentTime;
     tracker.feed(now, reading.pitch === null ? null : semitonesOf(reading.pitch));
-    onFrame({ ...reading, now, ...tracker.report() });
+    const other = findTheOther ? findTheOther(samples, audio.sampleRate) : null;
+    onFrame({ ...reading, now, other, ...tracker.report() });
     if (listening) setTimeout(listen, 33);
   }
 

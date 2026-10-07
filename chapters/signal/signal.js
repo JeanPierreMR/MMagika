@@ -9,24 +9,23 @@
 //      which is what Safari requires.)
 //   2. THE MOCKINGJAY: the forest fades in, and the whole page listens, constantly, and draws what it
 //      hears (voice_geometry.js). listen_for_the_call.js recognises the call. If the visitor sings
-//      four notes that aren't the call, a bird slowly whistles them back, its last note sinking into
-//      a deeper one, and a few low, dark notes follow ("signal.wrong").
-//   3. Once the call is heard: birds answer in harmony, joining one every second, in the key the
-//      visitor sang; everything turns gold, the page goes dark (the forest fades with it), and the
+//      four notes that aren't the call, a few birds whistle them back, a little off (out of tune and
+//      time, the last note bending flat), and it listens again soon after (WRONG_TUNE in bird_song.js).
+//   3. Once the call is heard: a choir answers with the call in harmony, in the key the visitor sang
+//      (CHOIR in bird_song.js); everything turns gold, the page goes dark (the forest fades with it), and the
 //      next chapter opens.
 // Sounds: "signal.*" in shared/sound_orchestra/sound_book.js.
 // What changes:    the site is told this chapter is finished.
 
 import { cue, duck, fadeAll, soundSystem } from "../shared/sound_orchestra/orchestra.js";
 import { finishChapterAndGoOn } from "../shared/tell_the_site.js";
-import { notesFromVoice, singNotes, singTheChoir, songLength } from "./bird_song.js";
+import { mirrorTheWrongTune, notesFromVoice, singTheChoir, wrongTuneLength } from "./bird_song.js";
 import { startListening } from "./listen_for_the_call.js";
 import { makeVoiceGeometry } from "./voice_geometry.js";
 
 const BIRD_ANSWERS_AFTER = 600;     // ms between hearing the call and the bird singing it back
 const DARK_FOR = 1600;              // ms of fading to black before the next chapter
 const MIRROR_AFTER = 350;           // ms of quiet before the bird mirrors the visitor's notes
-const WRONG_TIME = 5700;            // ms the dark turn lasts ("signal.wrong" in the sound book)
 
 const scene = document.getElementById("signal-scene");
 const gate = document.getElementById("microphone-gate");
@@ -90,19 +89,15 @@ function startTheMockingjay(audio, stream) {
   geometry.show(listening.ears);
 }
 
-// Four notes that weren't the call: a bird slowly whistles them back, its last note sinking, then the
-// dark turn. The listening is paused meanwhile, so it doesn't hear the bird (or the low notes).
+// Four notes that weren't the call: a few birds whistle them back, a little off (WRONG_TUNE in bird_song.js).
+// The listening is paused meanwhile, so it doesn't hear the bird (or the low notes).
 async function theBirdMirrors(heard) {
   if (answered || mirroring) return;
   mirroring = true;
   const notes = notesFromVoice(heard);
-  listening.pauseFor(MIRROR_AFTER + songLength(notes) * 1000 + WRONG_TIME);
+  listening.pauseFor(MIRROR_AFTER + wrongTuneLength(notes) * 1000);
   await wait(MIRROR_AFTER);
-  if (!answered) {
-    singNotes(notes, { fallAtEnd: true });
-    await wait((songLength(notes) - 1.6) * 1000);   // the dark notes start as the last one sinks
-  }
-  if (!answered) await cue("signal.wrong");
+  if (!answered) await mirrorTheWrongTune(notes);   // timings and voices: the settings in bird_song.js
   mirroring = false;
 }
 

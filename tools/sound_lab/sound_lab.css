@@ -30,3 +30,5 @@ select { font: inherit; background: #0f0d14; color: #eee; border: 1px solid #3a3
 button:disabled { opacity: 0.4; cursor: default; }
 code { color: #c9a7ff; }
 td .muted { font-size: 11px; }
+table.compare { max-width: 640px; margin-top: 10px; font-family: ui-monospace, monospace; }
+table.compare td:first-child { color: #8d84a2; }

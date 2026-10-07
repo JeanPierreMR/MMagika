@@ -12,7 +12,6 @@ cue has a file, its placeholder plays.
 | `vault.room` | `vault_room.ogg` | wind, an empty concrete room or bunker (loops) |
 | `vault.open` | `vault_open.ogg` | a heavy door / metal opening and a rising swell, ~5 s |
 | `signal.forest` | `forest.ogg` | a forest at dawn, leaves, distant birds (loops) |
-| `signal.wrong` | `wrong_dark.ogg` | a low cello / drone phrase, dark and slow, ~4 s |
 | `letter.choir` | `choir.ogg` | angels singing, a soft "aah" choir or ethereal pad (loops) |
 
 Format: `.ogg` (Opus or Vorbis) plays in Chrome, Firefox and Safari 17+, and `.mp3` plays everywhere.
@@ -29,4 +28,8 @@ Where to search (already filtered to CC0):
 
 | File | Source | License |
 |---|---|---|
-| (none yet) | | |
+| `vault_open.mp3` | Made from "Creaking Metal - Slow" by EagleStealthTeam (https://freesound.org/people/EagleStealthTeam/sounds/172411/), 1.0–4.4 s, and "floating whoosh slow" by martian (https://freesound.org/people/martian/sounds/19317/), 1.0–13 s played 2.4× faster at 32% volume, from the start with a slow 3.6 s fade-in and a 2.4 s fade-out; both mixed | CC0 (both, checked on their pages) |
+| `vault_wrong.mp3` | "Metal Impact Creak Resonant" by SoundDesignForYou (https://freesound.org/people/SoundDesignForYou/sounds/697748/), loudness evened | CC0 (checked on its page) |
+| `forest.mp3` | "Jungle / Forest Ambience" by seventhsamurai (https://freesound.org/people/seventhsamurai/sounds/644989/), its preview made into a seamless 37.5 s loop (end crossfaded into start) | CC0 (checked on its page) |
+| `radio_static.mp3` | "Radio tuning-static-interference" by quantumriver (https://freesound.org/people/quantumriver/sounds/552160/), loudness evened; glitches play short slices of it | CC0 (checked on its page) |
+| `key_click.mp3` | "Click 01_Minimal UI Sounds" by cabled_mess (https://freesound.org/people/cabled_mess/sounds/370962/) | CC0 (checked on its page) |
