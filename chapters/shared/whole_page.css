@@ -39,6 +39,26 @@ body {
 @view-transition { navigation: auto; }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.6s; }
 
+/* "Connection lost": shown by shared/tell_the_site.js when a chapter can't reach the site to move on.
+   Above everything, the dark handover screens included. */
+.connection-notice {
+  position: fixed;
+  left: 50%;
+  bottom: 8vh;
+  z-index: 1000;
+  translate: -50% 0;
+  margin: 0;
+  padding: 10px 16px;
+  border: 1px solid rgba(111, 243, 255, 0.35);
+  border-radius: 4px;
+  background: rgba(4, 5, 10, 0.85);
+  color: rgba(191, 248, 255, 0.95);
+  font: 11px/1.4 ui-monospace, "DejaVu Sans Mono", monospace;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 /* Text only for screen readers (people who listen to the page instead of seeing it). */
 .for-screen-readers {
   position: absolute;

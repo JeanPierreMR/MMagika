@@ -10,16 +10,25 @@
 //                  ("letter.*" in shared/sound_orchestra/sound_book.js).
 // What changes:    only what's on screen. This is the last chapter.
 
-import { cue } from "../shared/sound_orchestra/orchestra.js";
+import { cue, preloadSounds } from "../shared/sound_orchestra/orchestra.js";
 import { playBlueprintIntro } from "./blueprint_intro/blueprint_intro.js";
 import { startConnectionGlitches } from "./connection_glitches.js";
+import { letterHasArrived, shareOfLetterArrived } from "./scroll_and_wax_seal/letter_video_player.js";
 import { openScrollAndShowLetter } from "./scroll_and_wax_seal/scroll_and_wax_seal.js";
 
 const FRAME_DRAWING_TIME = 2200;   // milliseconds; matches the frame's animation in future_frame.css
 const WAIT_BEFORE_OPENING = 10500;  // milliseconds more, after the frame, before the scroll opens by itself (if the seal isn't clicked)
+const LONGEST_WAIT_FOR_LETTER = 25000;   // milliseconds the intro waits, at most, for the letter's videos to load
 
-// The angels start as the blue outline of the scroll disappears, and swell while the page fades in.
-await playBlueprintIntro({ onOutlineGone: () => cue("letter.choir") });
+preloadSounds("letter.");
+
+// The letter's videos load while the intro plays; the blue outline stays until they've arrived, so the
+// writing never stops to load. The angels start as the outline disappears, and swell while the page fades in.
+await playBlueprintIntro({
+  waitFor: letterHasArrived(LONGEST_WAIT_FOR_LETTER),
+  howFar: shareOfLetterArrived,
+  onOutlineGone: () => cue("letter.choir"),
+});
 document.body.classList.add("is-started");        // the frame starts drawing itself in (future_frame.css)
 
 // The scroll opens when the visitor clicks the seal, or by itself after a while, in case they don't.

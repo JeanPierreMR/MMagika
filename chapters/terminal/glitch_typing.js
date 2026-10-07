@@ -20,7 +20,7 @@
 // What changes:    the site is told this chapter is finished.
 
 import { makeRandom, pickOneOf } from "../shared/looks_random.js";
-import { cue, fadeAll, stopCue } from "../shared/sound_orchestra/orchestra.js";
+import { cue, fadeAll, preloadSounds, stopCue } from "../shared/sound_orchestra/orchestra.js";
 import { playKeystroke, playStatic } from "../shared/sounds.js";
 import { finishChapterAndGoOn } from "../shared/tell_the_site.js";
 
@@ -244,4 +244,5 @@ async function run() {
   await finishChapterAndGoOn("terminal");
 }
 
+preloadSounds("terminal.");                     // static and keystrokes are ready before the first one is needed
 run();

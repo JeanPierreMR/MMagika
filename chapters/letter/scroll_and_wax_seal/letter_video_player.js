@@ -10,6 +10,8 @@
 //   - letter_video/timing.json says each paragraph's size (so its room is kept from the start),
 //     when its video starts, and where its lines are (so the scroll can follow the writing).
 //   - After editing letter.html or the settings, render again: see tools/letter_video/README.md.
+//   - The videos start loading as soon as the page opens, and the page's intro (the blue outline)
+//     waits until they've arrived (letterHasArrived), so the writing never stops to load.
 
 const VIDEOS = new URL("./letter_video/", import.meta.url).href;
 const motionIsReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -17,15 +19,39 @@ const paragraphs = [];
 const writingOrder = [];             // every line with the second it starts being written
 let alreadyWritten = false;
 
-function makeVideo(file, loops) {
+// How much of the letter has arrived: videos that can play through, out of all of them.
+let videosMade = 0;
+let videosArrived = 0;
+const arrivals = [];                 // one promise per video: it can play through (or can't be loaded at all)
+
+function makeVideo(file, loops, version) {
   const video = document.createElement("video");
-  video.src = VIDEOS + file;
+  video.src = VIDEOS + file + version;
   video.muted = true;                // muted videos may play by themselves
   video.playsInline = true;
   video.preload = "auto";
   video.loop = loops;
   video.setAttribute("aria-hidden", "true");
+  videosMade++;
+  arrivals.push(new Promise((resolve) => {
+    const arrived = () => { videosArrived++; resolve(); };
+    video.addEventListener("canplaythrough", arrived, { once: true });
+    video.addEventListener("error", arrived, { once: true });     // a broken one mustn't hold the page up
+  }));
   return video;
+}
+
+// Resolves once every video of the letter can play through without stopping, or after longestWait
+// milliseconds at the latest (a very slow connection, or a browser that won't load videos ahead,
+// must never hold the page up for good). The letter chapter's intro waits for this (letter.js).
+export async function letterHasArrived(longestWait) {
+  const tooLong = new Promise((resolve) => setTimeout(resolve, longestWait));
+  await Promise.race([prepareLetter().then(() => Promise.all(arrivals)).catch(() => {}), tooLong]);
+}
+
+// From 0 to 1: how much of the letter has arrived so far.
+export function shareOfLetterArrived() {
+  return videosMade ? videosArrived / videosMade : 0;
 }
 
 // ---- Building (really just placing the videos, at their final size) -------------------------------
@@ -36,7 +62,13 @@ export function prepareLetter(scrollingArea) {
 }
 
 async function placeVideos() {
-  const timing = await (await fetch(VIDEOS + "timing.json")).json();
+  const answer = await fetch(VIDEOS + "timing.json");
+  const timing = await answer.json();
+  // The videos are kept by the browser for a long time (see the cache settings in settings.py). timing.json
+  // is rewritten with every render, so its fingerprint goes on the end of each video's address: after
+  // a new render the addresses change and the browser fetches the new videos instead of its old copies.
+  const fingerprint = answer.headers.get("etag") || answer.headers.get("last-modified") || "";
+  const version = fingerprint ? `?v=${encodeURIComponent(fingerprint.replace(/[^\w.-]/g, ""))}` : "";
   const sources = [...document.querySelectorAll(".letter-paragraph")];
   sources.forEach((source, index) => {
     source.textContent = source.textContent.replace(/\[[^\]]*\]/g, "");   // screen readers skip the [pausa] marks
@@ -45,8 +77,8 @@ async function placeVideos() {
     const holder = document.createElement("div");
     holder.className = "paragraph-holder";
     holder.style.aspectRatio = `${info.width} / ${info.height}`;   // its room, before anything loads
-    const writing = makeVideo(info.write, false);
-    const looping = makeVideo(info.loop, true);
+    const writing = makeVideo(info.write, false, version);
+    const looping = makeVideo(info.loop, true, version);
     looping.classList.add("waiting");
     holder.append(writing, looping);
     source.after(holder);
@@ -81,6 +113,7 @@ export async function writeLetterInGold(scrollingArea) {
     paragraph.holder.classList.add("ready");
     if (motionIsReduced) { switchToLoop(paragraph); paragraph.looping.pause(); continue; }
     paragraph.writing.addEventListener("ended", () => switchToLoop(paragraph), { once: true });
+    paragraph.writing.addEventListener("error", () => switchToLoop(paragraph), { once: true });   // it broke midway: show it written
     setTimeout(() => paragraph.writing.play().catch(() => switchToLoop(paragraph)), paragraph.info.start * 1000);
   }
   followTheWriting(scrollingArea);

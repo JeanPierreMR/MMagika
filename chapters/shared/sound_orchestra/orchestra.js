@@ -4,6 +4,8 @@
 // What it gives:   cue(name, options)        play a cue (a bed fades in and keeps going)
 //                  stopCue(name, { fade })    fade a bed out and stop it
 //                  fadeAll(seconds)           fade every bed out (e.g. as a page goes dark)
+//                  preloadSounds("vault.")    load a chapter's recordings as its page opens
+//                  fetchSoundsAhead("signal.") fetch the next chapter's recordings ahead of time
 //                  duck(name, amount, seconds) dip a bed for a moment (amount < 1), or swell it (> 1)
 //                  soundSystem(), masterOutput()  for the microphone and the mockingjay
 // How it plays:    every cue has its own volume control, and all of them go through one master
@@ -92,6 +94,31 @@ function loadRecording(file) {
       .catch(() => null));
   }
   return recordings.get(address);
+}
+
+// Every cue whose name starts with one of these, e.g. "vault." (and that has a recording).
+function recordingsOf(...chapters) {
+  const files = Object.entries(SOUND_BOOK)
+    .filter(([name, entry]) => entry.file && chapters.some((chapter) => name.startsWith(chapter)))
+    .map(([, entry]) => entry.file);
+  return [...new Set(files)];
+}
+
+// Load a chapter's recordings as its page opens, e.g. preloadSounds("vault."), so that each sound
+// plays the instant it's cued instead of being fetched at that moment (and arriving late).
+export function preloadSounds(...chapters) {
+  soundSystem();
+  recordingsOf(...chapters).forEach(loadRecording);
+}
+
+// Fetch the NEXT chapter's recordings quietly, once this page has settled, so the browser already has
+// them when that chapter opens. (Only fetched, not prepared for playing: this page won't play them.)
+export function fetchSoundsAhead(...chapters) {
+  const fetchThem = () => recordingsOf(...chapters).forEach((file) => {
+    fetch(new URL(file, import.meta.url).href, { priority: "low" }).then((response) => response.arrayBuffer()).catch(() => {});
+  });
+  if (document.readyState === "complete") fetchThem();
+  else window.addEventListener("load", fetchThem, { once: true });
 }
 
 async function makeSound(entry, out, callOptions) {

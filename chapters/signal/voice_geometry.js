@@ -20,6 +20,7 @@ const CYAN = "111, 243, 255";
 const GOLD = "230, 200, 126";
 const NOTE_NAMES = ["A", "B♭", "B", "C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭"];
 const MAX_PIXEL_DENSITY = 1.5;     // sharper than this costs more than it shows
+const JOIN = 0.12;                 // the share of the sound ring, at its end, eased to meet its start
 
 const noteName = (semitone) => {
   const nearest = Math.round(semitone);
@@ -106,20 +107,29 @@ export function makeVoiceGeometry(canvas, picture) {
       for (const s of samples) loudest = Math.max(loudest, Math.abs(s));
     } else samples.fill(0);
     const lift = Math.min(5, 0.5 / loudest);                    // soft sounds still move the ring
-    pen.shadowColor = `rgba(${colour}, 0.9)`;
-    pen.shadowBlur = 10;
-    stroke(0.9, 1.6);
     pen.beginPath();
     const points = 256;
-    for (let p = 0; p <= points; p++) {
+    // The slice of sound ends at a different height than it starts, which would leave a step where
+    // the ring closes. So over the last part of the ring (JOIN), the wave is eased towards its
+    // starting height, and the two ends meet.
+    const gap = samples[0] - samples[samples.length - 1];
+    for (let p = 0; p < points; p++) {
       const i = Math.floor((p / points) * (samples.length - 1));
       const angle = -Math.PI / 2 + (p / points) * Math.PI * 2;
-      const r = radius * 1.12 + samples[i] * lift * radius * 0.28;
+      const closing = Math.max(0, (p / points - (1 - JOIN)) / JOIN);          // 0, then rising to 1 at the end
+      const sample = samples[i] + gap * closing * closing * (3 - 2 * closing);
+      const r = radius * 1.12 + sample * lift * radius * 0.28;
       const x = cx + Math.cos(angle) * r, y = cy + Math.sin(angle) * r;
       if (p === 0) pen.moveTo(x, y); else pen.lineTo(x, y);
     }
-    pen.stroke();
-    pen.shadowBlur = 0;
+    pen.closePath();
+    // The glow: a wide faint stroke, a narrower brighter one, then the line itself. (A real blurred
+    // shadow, shadowBlur, looks much the same but is far more work for the browser on every frame.)
+    pen.lineJoin = "round";
+    stroke(0.10, 9); pen.stroke();
+    stroke(0.22, 4.5); pen.stroke();
+    stroke(0.9, 1.6); pen.stroke();
+    pen.lineJoin = "miter";                                      // back to sharp corners for the other shapes
     return loudest;
   }
 

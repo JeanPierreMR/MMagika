@@ -193,6 +193,7 @@ export async function openScrollAndShowLetter() {
 
 bendSealAroundTheRoll();
 
-// Build the letter at its final size while the scroll is still rolled up (it's invisible), once
-// the page has settled. Then, when the writing starts, every paragraph already has its room.
-setTimeout(() => prepareLetter(readingArea), 1500);
+// Build the letter at its final size while the scroll is still rolled up (it's invisible), straight
+// away: its videos load while the intro plays (letter.js waits for them). Then, when the writing
+// starts, every paragraph already has its room and its video.
+prepareLetter(readingArea);

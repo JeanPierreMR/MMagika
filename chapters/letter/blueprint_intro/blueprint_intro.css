@@ -30,6 +30,9 @@
 }
 .blueprint-intro.is-drawing .line { stroke-dashoffset: 0; }
 .blueprint-intro.is-drawing .label { opacity: 0.8; }
+/* "RECEIVING TRANSMISSION · n%": only while the outline waits for the letter to load (blueprint_intro.js). */
+.blueprint .label.receiving { animation: receiving-pulses 1.2s ease-in-out infinite; }
+@keyframes receiving-pulses { 50% { opacity: 0.35; } }
 
 /* Back to black: the outline fades. Then the black itself fades, revealing the page. */
 .blueprint { transition: opacity 0.7s ease; }

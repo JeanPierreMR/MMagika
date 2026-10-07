@@ -12,6 +12,7 @@ import { makeRandom, pickOneOf } from "../../shared/looks_random.js";
 const STAR_WHITE = "#fff6d6";
 const OCCASIONAL_STAR_COLOURS = ["#6ff3ff", "#c9a7ff", "#8dffb5", "#e6c87e"];
 const REDRAWS_PER_SECOND = 20;
+const MAX_PIXEL_DENSITY = 2;        // sharp on every screen; see scatterStars
 
 const sky = document.getElementById("night-sky");
 const pen = sky.getContext("2d");   // the "pen" we draw on the canvas with
@@ -20,8 +21,10 @@ let stars = [];
 
 // Fill the sky with stars. Called at the start and whenever the window changes size.
 function scatterStars() {
-  // Canvases look blurry on sharp screens unless we draw at the screen's real pixel density.
-  const pixelDensity = window.devicePixelRatio || 1;
+  // Canvases look blurry on sharp screens unless we draw at the screen's pixel density. Up to
+  // MAX_PIXEL_DENSITY: beyond that (some phones are 3× or more) soft round stars look no sharper,
+  // but the canvas has more than twice as many pixels to clear and fill on every redraw.
+  const pixelDensity = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_DENSITY);
   sky.width = window.innerWidth * pixelDensity;
   sky.height = window.innerHeight * pixelDensity;
   pen.setTransform(pixelDensity, 0, 0, pixelDensity, 0, 0);

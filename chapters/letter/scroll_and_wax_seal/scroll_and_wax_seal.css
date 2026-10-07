@@ -21,12 +21,23 @@
   width: min(90vw, 900px);
   height: var(--roll-height);                  /* sealed: only the roll */
   transform: rotate(-3deg);                    /* lying slightly askew until it opens */
-  filter: drop-shadow(0 28px 20px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 22px rgba(180, 76, 255, 0.28));
   transition: height var(--unroll-time) var(--unroll-curve), transform var(--unroll-time) cubic-bezier(.2, .7, .2, 1);
 }
 .scroll.is-open {
   height: var(--open-height);
   transform: rotate(0deg);
+}
+
+/* The scroll's shadow on the page, and a faint purple glow around it. It's a separate, empty element
+   BEHIND the scroll, not a filter on the scroll itself: a filter would make the browser redraw and
+   blur the whole scroll again every time a frame of the letter's videos changes. A shadow on its own
+   element is drawn once. It grows with the scroll as it unrolls. */
+.scroll-shadow {
+  position: absolute;
+  inset: 0 6px;
+  border-radius: 3px / 11px;
+  box-shadow: 0 28px 20px rgba(0, 0, 0, 0.6), 0 0 22px rgba(180, 76, 255, 0.28);
+  pointer-events: none;
 }
 
 /* The sheet: black-purple, lighter in the middle, darker at the rolled edges. */

@@ -334,7 +334,14 @@ export function singNotes(notes, { voice = "bird", listener = null, volume = SOU
     source.stop(end);
   }
   const total = time - audio.currentTime + 1.3;          // including the echo dying away
-  return new Promise((resolve) => setTimeout(resolve, total * 1000));
+  // Once it has died away, take this singer apart. Otherwise its echo (a loop) and its volume
+  // controls stay plugged into the output for good, and every wrong tune would add more.
+  const parts = [out, loudness, echo, echoFade, muffle, tremble, pipping, singer.output,
+    ...[flutter, vibrato, trill, trembling, pipsLfo, ...wander].map((w) => w.amount)];
+  return new Promise((resolve) => setTimeout(() => {
+    parts.forEach((part) => part.disconnect());
+    resolve();
+  }, total * 1000));
 }
 
 // One bird sings the call (in the original key).

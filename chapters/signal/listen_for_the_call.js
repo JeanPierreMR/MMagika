@@ -3,6 +3,7 @@
 // call, it says so too, so the bird can mirror them back.
 //
 // What starts it:  signal.js, once the microphone is on. It keeps listening until the call is heard.
+//   It also watches the microphone itself: if it's unplugged or switched off, onLost() says so.
 // What it gives back: "ears" (the sound, for the drawing), pauseFor(ms) (stop listening for a moment,
 //   e.g. while the bird sings, so it doesn't hear itself), and every ~33 ms a report of what it worked
 //   out (onFrame), which the drawing shows. onHeard(notes) once the call is right (with the four notes
@@ -56,6 +57,7 @@ const LONGEST_CALL = 7;
 const QUIETEST = 0.008;           // below this loudness (RMS), it's silence
 const PHRASE_END = 1.1;           // seconds of quiet that end a phrase (then a wrong phrase is mirrored)
 const MIRROR_COOLDOWN = 5;        // seconds: the bird mirrors at most this often
+const MUTED_TOO_LONG = 4000;      // ms a microphone may stay muted before it counts as disconnected
 
 export const semitonesOf = (pitch) => 12 * Math.log2(pitch / 440);
 // The call's shape: the jumps between its notes, in semitones (+3, −1, −7).
@@ -205,7 +207,9 @@ export function makeNoteTracker({ onHeard, onMirror = () => {} }) {
 
 // Options: pitchFinder "autocorrelation" or "mcleod" (default PITCH_FINDER); alsoTry: the other one too,
 // on the very same sound, for comparing (its reading comes in the frame report as "other").
-export function startListening(audio, stream, { onFrame, onHeard, onMirror, pitchFinder = PITCH_FINDER, alsoTry = null }) {
+// onLost: the microphone stopped by itself (unplugged, switched off, permission taken back). It's called
+// once; listening has not been stopped yet, so call stop() and start again with a new microphone.
+export function startListening(audio, stream, { onFrame, onHeard, onMirror, onLost = () => {}, pitchFinder = PITCH_FINDER, alsoTry = null }) {
   const findThePitch = PITCH_FINDERS[pitchFinder];
   const findTheOther = alsoTry ? PITCH_FINDERS[alsoTry] : null;
   const microphone = audio.createMediaStreamSource(stream);
@@ -231,9 +235,45 @@ export function startListening(audio, stream, { onFrame, onHeard, onMirror, pitc
     if (listening) setTimeout(listen, 33);
   }
 
+  // ---- Is the microphone still there? ----------------------------------------------------------
+  // A microphone that is unplugged or switched off "ends"; some browsers only "mute" it (silence).
+  // Muting also happens for a moment by itself (e.g. the tab going to the background on a phone), so
+  // it only counts as lost if it stays muted for MUTED_TOO_LONG while the page is on screen.
+  const tracks = stream.getAudioTracks();
+  let lost = false;
+  let mutedTimer = null;
+  function lose() {
+    if (lost || !listening) return;
+    lost = true;
+    onLost();
+  }
+  function watchMuting() {
+    clearTimeout(mutedTimer);
+    if (!tracks.some((track) => track.muted)) return;
+    mutedTimer = setTimeout(() => {
+      if (document.visibilityState === "visible" && tracks.some((track) => track.muted)) lose();
+    }, MUTED_TOO_LONG);
+  }
+  // Coming back to the page: phones pause the sound system in the background; start it again.
+  function wakeUp() {
+    if (!listening || document.visibilityState !== "visible") return;
+    if (audio.state !== "running") audio.resume().catch(() => {});
+    watchMuting();
+  }
+  for (const track of tracks) {
+    track.addEventListener("ended", lose);
+    track.addEventListener("mute", watchMuting);
+    track.addEventListener("unmute", watchMuting);
+  }
+  document.addEventListener("visibilitychange", wakeUp);
+  audio.addEventListener("statechange", wakeUp);
+
   function stop() {
     listening = false;
     tracker.stop();
+    clearTimeout(mutedTimer);
+    document.removeEventListener("visibilitychange", wakeUp);
+    audio.removeEventListener("statechange", wakeUp);
     stream.getTracks().forEach((track) => track.stop());   // the microphone light goes off
     microphone.disconnect();
   }

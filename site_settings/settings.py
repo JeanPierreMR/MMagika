@@ -87,6 +87,35 @@ STORAGES = {
     },
 }
 
+# How long a visitor's browser may keep each file before asking the site for it again. Longer means
+# fewer requests and a faster second visit, but a changed file takes that long to reach everyone, so
+# each kind gets what it can afford. (On your computer nothing is kept: no_cache_while_developing.py.)
+HOUR = 60 * 60
+DAY = 24 * HOUR
+KEEP_FILES_FOR = {
+    # The fonts never change.
+    ".woff2": 365 * DAY,
+    # The letter's videos: their addresses change with every render (see letter_video_player.js),
+    # so an old copy can never be shown in place of a new one.
+    ".mp4": 30 * DAY,
+    # Pictures and recordings rarely change. If you replace one and can't wait a week, give it a new name.
+    ".webp": 7 * DAY, ".png": 7 * DAY, ".jpg": 7 * DAY, ".svg": 7 * DAY,
+    ".mp3": 7 * DAY, ".ogg": 7 * DAY, ".wav": 7 * DAY, ".m4a": 7 * DAY,
+}
+# Everything else (scripts, styles, timing.json): these must match the page that uses them, so only briefly.
+WHITENOISE_MAX_AGE = HOUR
+
+
+def keep_files_longer(headers, path, url):
+    """WhiteNoise calls this for every file it hands out; we set how long it may be kept."""
+    for ending, seconds in KEEP_FILES_FOR.items():
+        if url.endswith(ending):
+            headers["Cache-Control"] = f"max-age={seconds}, public"
+            return
+
+
+WHITENOISE_ADD_HEADERS_FUNCTION = keep_files_longer
+
 
 # --- Language and time -------------------------------------------------------
 LANGUAGE_CODE = "en"

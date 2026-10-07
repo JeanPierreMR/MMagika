@@ -13,6 +13,8 @@
 
 <div id="scroll-layer" class="layer">
   <div id="scroll" class="scroll is-closed">
+    {# Its shadow and glow, behind everything else of the scroll (see .scroll-shadow in the CSS for why it's separate). #}
+    <div class="scroll-shadow" aria-hidden="true"></div>
     {# The sheet. While rolled up, the roll below covers all of it. #}
     <div class="paper">
       <div class="paper-edge" aria-hidden="true"><i class="corner"></i><i class="corner"></i><i class="corner"></i><i class="corner"></i></div>

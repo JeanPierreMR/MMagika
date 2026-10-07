@@ -11,12 +11,13 @@
 //                 the door, the doorway glows and the whole view burns out white, and the next chapter begins;
 //        wrong  → the dials shudder with a dull clank;
 //        jammed → too many tries this minute; wait.
+//        no answer → the site couldn't be reached: it says so, and the visitor can try again.
 // Sounds:          the room's low wind ("vault.room"), dial ticks, the clank and the opening, all in
 //                  shared/sound_orchestra/sound_book.js.
 // What changes:    the site remembers the vault is open (so the next chapter can be entered).
 
 import { makeRandom } from "../shared/looks_random.js";
-import { cue, fadeEverythingOut, stopCue } from "../shared/sound_orchestra/orchestra.js";
+import { cue, fadeEverythingOut, fetchSoundsAhead, preloadSounds, stopCue } from "../shared/sound_orchestra/orchestra.js";
 import { playClank, playVaultOpening } from "../shared/sounds.js";
 import { tellTheSite } from "../shared/tell_the_site.js";
 import { makeDials } from "./combination_dials.js";
@@ -83,7 +84,7 @@ async function tryTheCombination() {
   if (trying) return;
   trying = true;
   dials.lock(true);
-  const answer = await tellTheSite("/vault/open", { combination: dials.combination() }).catch(() => ({}));
+  const answer = await tellTheSite("/vault/open", { combination: dials.combination() }).catch(() => ({ unreachable: true }));
 
   if (answer.opened) {
     status.textContent = "ACCESS GRANTED";
@@ -101,16 +102,27 @@ async function tryTheCombination() {
     }, motionIsReduced ? 600 : OPENING_TIME);
     return;
   }
-  playClank();
-  dials.shake();
-  status.textContent = answer.jammed ? "THE LOCK IS JAMMED · WAIT A MINUTE" : "ACCESS DENIED";
+  // Only a real "no" from the site is a wrong combination. If the site couldn't be reached, or refused
+  // for another reason, say that instead: the combination may well be right.
+  const jammed = answer.jammed || answer.status === 429;      // too many tries, or too many requests
+  const wrong = answer.status === 200 && answer.opened === false;
+  if (wrong || jammed) {
+    playClank();
+    dials.shake();
+  }
+  if (jammed) status.textContent = "THE LOCK IS JAMMED · WAIT A MINUTE";
+  else if (wrong) status.textContent = "ACCESS DENIED";
+  else if (answer.status === 403) status.textContent = "THE LOCK HAS RESET · RELOAD THE PAGE";   // the page's token ran out
+  else status.textContent = "NO ANSWER FROM THE LOCK · TRY AGAIN";                              // no connection
   status.className = "lock-status is-denied";
   setTimeout(() => {
     trying = false;
     dials.lock(false);
-  }, answer.jammed ? 4000 : 900);
+  }, jammed ? 4000 : 900);
 }
 
+preloadSounds("vault.");                        // the clank and the opening are ready the moment they're needed
+fetchSoundsAhead("signal.");                    // and the next chapter's forest is on its way
 cue("vault.room");                              // fades in (on the first touch, if the browser waits for one)
 placeRivets();
 raiseDust();

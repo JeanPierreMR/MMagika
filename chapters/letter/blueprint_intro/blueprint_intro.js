@@ -4,6 +4,8 @@
 // What it does:    1. black;
 //                  2. the closed scroll's outline (the roll, the ribbons, the seal) draws itself in
 //                     blue, with a few measuring lines and labels, as if the machine scanned it;
+//                     (if the page isn't ready yet — the letter's videos still loading — the finished
+//                     outline stays, with "RECEIVING TRANSMISSION · n%" under it, until it is);
 //                  3. the outline fades: black again;
 //                  4. the black fades away and the page appears.
 //                  The outline is taken from where the real scroll is on screen, so it lines up.
@@ -75,10 +77,28 @@ function traceTheScroll(svg) {
   return at + DRAW_TIME;                                  // when the last line is finished
 }
 
-export async function playBlueprintIntro({ onOutlineGone = () => {} } = {}) {
+// While the outline waits for the page to be ready: a line under it, counting up ("RECEIVING · 64%").
+// It only shows if the wait is noticeable, and goes with the outline.
+function showReceiving(svg, howFar) {
+  const roll = (document.querySelector("#scroll .roll") || document.querySelector("#scroll"))?.getBoundingClientRect();
+  if (!roll) return () => {};
+  const words = document.createElementNS(SVG, "text");
+  Object.entries({ x: (roll.left + roll.right) / 2, y: roll.bottom + 66, "text-anchor": "middle" }).forEach(([name, value]) => words.setAttribute(name, value));
+  words.classList.add("label", "receiving");
+  const say = () => { words.textContent = `RECEIVING TRANSMISSION · ${Math.round(howFar() * 100)}%`; };
+  say();
+  svg.appendChild(words);
+  const counting = setInterval(say, 200);
+  return () => { clearInterval(counting); say(); };
+}
+
+// waitFor: a promise the outline waits for before it fades (e.g. the letter's videos having loaded);
+// howFar(): how much of that is done, 0 to 1, for the "RECEIVING" line.
+export async function playBlueprintIntro({ onOutlineGone = () => {}, waitFor = Promise.resolve(), howFar = () => 1 } = {}) {
   const intro = document.querySelector(".blueprint-intro");
   if (!intro) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {   // just a short fade from black
+    await waitFor;
     onOutlineGone();
     intro.style.setProperty("--reveal-time", "0.6s");
     intro.classList.add("is-revealing");
@@ -93,6 +113,16 @@ export async function playBlueprintIntro({ onOutlineGone = () => {} } = {}) {
   await wait(BLACK_FIRST);
   intro.classList.add("is-drawing");
   await wait(drawingTime + HOLD);
+  // Normally everything has arrived by now. If not, the finished outline stays, with a count, until it has.
+  let ready = false;
+  waitFor.then(() => { ready = true; });
+  await wait(0);
+  if (!ready) {
+    const stopCounting = showReceiving(svg, howFar);
+    await waitFor;
+    stopCounting();
+    await wait(300);                                // the count is seen reaching its end
+  }
   intro.classList.add("is-fading-outline");
   onOutlineGone();                                  // e.g. the choir starts here (letter.js)
   await wait(OUTLINE_FADE + BLACK_AGAIN);

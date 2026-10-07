@@ -11,13 +11,14 @@
 //      hears (voice_geometry.js). listen_for_the_call.js recognises the call. If the visitor sings
 //      four notes that aren't the call, a few birds whistle them back, a little off (out of tune and
 //      time, the last note bending flat), and it listens again soon after (WRONG_TUNE in bird_song.js).
+//      If the microphone is unplugged or switched off meanwhile, the gate comes back and says so.
 //   3. Once the call is heard: a choir answers with the call in harmony, in the key the visitor sang
 //      (CHOIR in bird_song.js); everything turns gold, the page goes dark (the forest fades with it), and the
 //      next chapter opens.
 // Sounds: "signal.*" in shared/sound_orchestra/sound_book.js.
 // What changes:    the site is told this chapter is finished.
 
-import { cue, duck, fadeAll, soundSystem } from "../shared/sound_orchestra/orchestra.js";
+import { cue, duck, fadeAll, fetchSoundsAhead, preloadSounds, soundSystem } from "../shared/sound_orchestra/orchestra.js";
 import { finishChapterAndGoOn } from "../shared/tell_the_site.js";
 import { mirrorTheWrongTune, notesFromVoice, singTheChoir, wrongTuneLength } from "./bird_song.js";
 import { startListening } from "./listen_for_the_call.js";
@@ -74,19 +75,32 @@ async function turnOnTheMicrophone() {
 
 // ---- 2. Listening ---------------------------------------------------------------------------------
 let listening = null;
+let geometry = null;                // the drawing: made once, even if the microphone is started again
 let answered = false;
 let mirroring = false;
 
 function startTheMockingjay(audio, stream) {
   scene.classList.add("is-listening");
   cue("signal.forest");
-  const geometry = makeVoiceGeometry(document.getElementById("voice-geometry"), document.getElementById("mockingjay"));
+  geometry ??= makeVoiceGeometry(document.getElementById("voice-geometry"), document.getElementById("mockingjay"));
   listening = startListening(audio, stream, {
     onFrame: (report) => geometry.report(report),
     onHeard: (heard) => theBirdsAnswer(audio, geometry, heard),
     onMirror: (heard) => theBirdMirrors(heard),
+    onLost: theMicrophoneIsLost,
   });
   geometry.show(listening.ears);
+}
+
+// The microphone stopped by itself (unplugged, switched off, permission taken back): the gate comes
+// back and says so. Pressing the button starts listening again, with whatever microphone is there now.
+function theMicrophoneIsLost() {
+  if (answered) return;
+  listening.stop();
+  gateMessage.textContent = "The microphone was disconnected. Connect it again and press the button.";
+  button.disabled = false;
+  gate.classList.remove("is-gone");
+  button.focus();
 }
 
 // Four notes that weren't the call: a few birds whistle them back, a little off (WRONG_TUNE in bird_song.js).
@@ -118,4 +132,6 @@ async function theBirdsAnswer(audio, geometry, heard) {
   await finishChapterAndGoOn("signal");
 }
 
+preloadSounds("signal.");                       // the forest is ready when the microphone comes on
+fetchSoundsAhead("terminal.", "letter.");       // and the next chapters' sounds are on their way
 button.addEventListener("click", turnOnTheMicrophone);

@@ -32,7 +32,11 @@
 {% block body %}
 <main id="signal-scene">
   <canvas id="voice-geometry" class="layer" aria-hidden="true"></canvas>
-  <img id="mockingjay" class="mockingjay" src="{% static 'signal/images/mockingjay.png' %}" alt="The mockingjay">
+  {# The picture, twice: a copy with a big glow behind (only faded in and out with the sound), and the picture itself. See signal.css. #}
+  <div id="mockingjay" class="mockingjay">
+    <img class="big-glow" src="{% static 'signal/images/mockingjay.png' %}" alt="" aria-hidden="true">
+    <img class="small-glow" src="{% static 'signal/images/mockingjay.png' %}" alt="The mockingjay">
+  </div>
 
   {# 1. The gate: nothing happens until the microphone is on. #}
   <section id="microphone-gate" class="microphone-gate" aria-label="Microphone needed">
