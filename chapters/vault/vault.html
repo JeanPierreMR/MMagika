@@ -77,11 +77,11 @@
   <div class="flickering-light layer" aria-hidden="true"></div>
   <div class="vignette layer" aria-hidden="true"></div>
 
-  {# The plate with the twelve dials, and a line of status text. #}
+  {# The plate with the twelve dials, and a line that only speaks after a try (no instructions). #}
   <section class="dial-plate" aria-label="Combination lock">
     <p class="plate-engraving" aria-hidden="true">EVERAFTER · SECTOR 12 · SEALED</p>
     <div id="dials" class="dials" role="group" aria-label="Combination, twelve dials. Use the arrow keys or type each character, then press Enter."></div>
-    <p id="lock-status" class="lock-status" role="status" aria-live="polite">TURN THE DIALS · PRESS ENTER OR THE WHEEL</p>
+    <p id="lock-status" class="lock-status" role="status" aria-live="polite"></p>
   </section>
 
   <button id="turn-the-wheel" class="turn-the-wheel" type="button" aria-label="Turn the wheel to try the combination"></button>
