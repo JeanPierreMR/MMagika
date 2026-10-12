@@ -7,7 +7,7 @@ A short story told in four chapters, one web page each. You can't skip ahead: th
 | 1. **The vault** | `/vault` | An old, rusty vault door in a concrete wall. Dust drifts in a flickering light, and a red handprint is smeared across it. Twelve rotating dials (digits and letters) hold the combination. The right one makes the bolts slide back and the wheel spin; the doorway glows with light from inside, and the whole view burns out white, like a camera pointed at the sun. |
 | 2. **The signal** | `/signal` | First, the page asks for the microphone and won't go on without it. Then the whole page listens: a picture in the middle, the sound drawn around it as moving geometry, with the machine's calculations written over it. No instructions. When it hears the mockingjay's four notes, whistled or hummed (at a normal pace, 1.5 to 7 seconds), the bird sings them back, and everything goes dark. Other notes are softly mirrored back by the bird. |
 | 3. **The terminal** | `/terminal` | The machine crashes: a Linux kernel panic, stopping now and then as if the machine were busy, the screen tears, one second of black. Then a glitched futuristic terminal types the EverAfter mission file, Kids Next Door style, glitching as it goes; some lines show a progress bar while the machine works on them. A bright wipe: "Welcome Doctor · Starting letter", which flies up and fades. |
-| 4. **The letter** | `/letter` | A clean holographic frame and a night sky. Click the dark scroll's seal (or wait) and it bursts, the scroll unrolls, and the Dreamers' letter writes itself in gold. Now and then the connection seems to fail: thin green lines flicker or race across, or a small strip of grain. |
+| 4. **The letter** | `/letter` | A clean holographic frame and a night sky. Click the dark scroll's seal (or wait) and it bursts, the scroll unrolls, and the Dreamers' letter writes itself in gold. |
 
 `/` sends you to the chapter you're up to.
 
@@ -33,7 +33,7 @@ Each JavaScript file starts by answering: *What starts it? What does it do? What
 | `chapters/vault/` | The door and the scene (`vault.css`), the dials (`combination_dials.js`), the opening (`vault.js`), and photo textures (CC0, credits in `image_credits.md`) |
 | `chapters/signal/` | The microphone gate and the listening page. **The picture in the middle is `images/mockingjay.png`** (a placeholder: replace it, same name). How the call is recognised is explained at the top of `listen_for_the_call.js`; the drawing is `voice_geometry.js`; the bird's song is `bird_song.js` |
 | `chapters/terminal/` | The crash (`kernel_panic.txt`; a `[wait 1500]` line pauses it), the script itself in `terminal.html` (edit the lines freely; `data-pause` and `data-working` set the pauses and progress bars), and the typing and glitches (`glitch_typing.js`) |
-| `chapters/letter/` | The future frame, the night sky, the scroll, and the connection glitches (`connection_glitches.js`). **The letter's text is in `scroll_and_wax_seal/letter.html`**, with `[pausa]`, `[pausa larga]` and `[silencio]` where the pen stops; it's played from pre-rendered videos (see below) |
+| `chapters/letter/` | The future frame, the night sky, and the scroll. **The letter's text is in `scroll_and_wax_seal/letter.html`**, with `[pausa]`, `[pausa larga]` and `[silencio]` where the pen stops; it's played from pre-rendered videos (see below) |
 
 ### Everything else
 
@@ -110,7 +110,7 @@ All sounds live in **`chapters/shared/sound_orchestra/`**, and **`sound_book.js`
 | Vault | a low wind in the empty room; soft dial clicks; when wrong, the metal hits its stop with a low clank ringing in the room; on opening, bolts, a deep swell and a bright shimmer fading into the white |
 | Signal | a forest at dawn once the microphone is on; birds joining into one call for the right call; for a wrong one, a few birds mirroring it a little off: out of tune and out of time |
 | Terminal | the machine's hum during the panic, static, soft keystrokes, a glassy chord swelling in for "Welcome Doctor" |
-| Letter | angels singing, fading in with the page; a warm low bloom as the seal bursts; the choir dips when the connection fails |
+| Letter | angels singing, fading in with the page; a warm low bloom as the seal bursts |
 
 **Every sound is synthesized for now** (placeholders, in `synth_recipes.js`). To use a real recording instead, upload it from the sound lab (it's saved into `sound_orchestra/audio/`), pick it in that cue's dropdown, press "copy" and paste the cue over its entry in `sound_book.js`. Or put the file there yourself and set the cue's `file` (e.g. `file: "audio/forest.ogg"`). `audio/README.md` lists what to look for, with CC0-filtered search links, and a place for credits.
 

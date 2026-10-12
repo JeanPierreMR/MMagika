@@ -84,8 +84,4 @@ export const SOUND_BOOK = {
     kind: "once", where: "the wax seal bursts: a warm, low bloom",
     file: null, synth: "sealShimmer", volume: 0.7,
   },
-  "letter.glitch": {
-    kind: "once", where: "the connection fails for a moment (the choir also dips)",
-    file: "audio/radio_static.mp3", synth: "staticCrackle", volume: 0.5, options: { duration: 0.12 },
-  },
 };

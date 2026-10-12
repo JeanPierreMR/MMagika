@@ -12,16 +12,13 @@
        with small status readouts                                (future_frame.css, below)
     3. the dark scroll: clicking its seal (or waiting) makes it glow and burst, the sheet unrolls,
        and the Dreamers' letter writes itself in gold             (scroll_and_wax_seal/)
-    4. now and then, the connection seems to fail for a moment: thin green lines flicker or
-       race across, or a small strip of grain                    (connection_glitches.js)
-  letter.js plays the intro, then starts the frame, the scroll and the glitches.
+  letter.js plays the intro, then starts the frame and the scroll.
 {% endcomment %}
 
 {% block title %}A letter for the Dreamers{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'letter/future_frame.css' %}" nonce="{{ csp_nonce }}">
-<link rel="stylesheet" href="{% static 'letter/connection_glitches.css' %}" nonce="{{ csp_nonce }}">
 {% endblock %}
 
 {% block body %}
@@ -37,18 +34,13 @@
       <path class="frame-line faint" d="M260 30 H740"/>
       <path class="frame-line faint" d="M260 970 H740"/>
     </svg>
-    <p class="readout top-left"><span class="status-word">CHANNEL SECURE</span> <span class="blink">●</span></p>
+    <p class="readout top-left">CHANNEL SECURE <span class="blink">●</span></p>
     <p class="readout top-right">DREAMERS · REFUGE NETWORK</p>
     <p class="readout bottom-left">HOLO-V13 · LINK STABLE</p>
     <p class="readout bottom-right">SECRET CODE: 3000</p>
   </div>
 
   {% include "letter/scroll_and_wax_seal/scroll_and_wax_seal.html" %}
-
-  {# The connection failing for a moment (shown and hidden by connection_glitches.js). #}
-  <div class="glitch-lines" hidden aria-hidden="true"></div>
-  <div class="glitch-speck" hidden aria-hidden="true"></div>
-  <div class="glitch-sweep" hidden aria-hidden="true"></div>
 
   {% include "letter/blueprint_intro/blueprint_intro.html" %}
 

@@ -36,9 +36,6 @@ To add a candidate, add a row. The lab reads the columns in this order: **cue | 
 | terminal.static | radio_static | jascha23 | CC0 | https://freesound.org/people/jascha23/sounds/161083/ | https://cdn.freesound.org/previews/161/161083_146317-lq.mp3 |
 | terminal.static | ✓ USED Radio tuning-static-interference | quantumriver | CC0 | https://freesound.org/people/quantumriver/sounds/552160/ | https://cdn.freesound.org/previews/552/552160_716433-lq.mp3 |
 | terminal.static | End radio transmission | ReadeOnly | CC0 | https://freesound.org/people/ReadeOnly/sounds/47646/ | https://cdn.freesound.org/previews/47/47646_545448-lq.mp3 |
-| letter.glitch | Remixed static with verb | VonKrapFamily | CC0 | https://freesound.org/people/VonKrapFamily/sounds/560013/ | https://cdn.freesound.org/previews/560/560013_4927274-lq.mp3 |
-| letter.glitch | Vintage Radio Tuning 5 | exsil | CC0 | https://freesound.org/people/exsil/sounds/652596/ | https://cdn.freesound.org/previews/652/652596_13766510-lq.mp3 |
-| letter.glitch | Full radio sweep | vedas | CC0 | https://freesound.org/people/vedas/sounds/396902/ | https://cdn.freesound.org/previews/396/396902_828209-lq.mp3 |
 | terminal.keys | Mechanical Keyboard Typing (Treble Version) | stu556 | CC0 | https://freesound.org/people/stu556/sounds/450282/ | https://cdn.freesound.org/previews/450/450282_9373288-lq.mp3 |
 | terminal.keys | Keyboard Typing 10 (WhiteFox, Mechanical) | grcekh | CC0 | https://freesound.org/people/grcekh/sounds/546167/ | https://cdn.freesound.org/previews/546/546167_12206738-lq.mp3 |
 | terminal.keys | Blue Switch Mechanical Keyboard Typing | rhinenux | CC0 | https://freesound.org/people/rhinenux/sounds/631609/ | https://cdn.freesound.org/previews/631/631609_12264536-lq.mp3 |
