@@ -61,11 +61,40 @@ function bendSealAroundTheRoll() {
 
 // A picture of the finished seal, for the flying pieces: moving one picture is much
 // lighter for the browser than redrawing 64 strips with their shadows in every piece.
-function takePictureOfSeal() {
+// It's taken when the page loads and painted onto a canvas there and then, so that when the seal
+// bursts each piece only copies finished pixels (drawing the seal twelve times at that moment
+// made the burst stutter).
+const SHARPEST = 2;              // the picture is at most this many times the seal's size (for sharp screens)
+let sealPicture = null;          // a canvas; or the plain picture, if this browser can't paint it onto one
+
+async function takePictureOfSeal() {
+  const width = seal.offsetWidth;
+  const height = seal.offsetHeight;
+  const drawing = seal.querySelector("svg").cloneNode(true);
+  drawing.setAttribute("width", width);            // Firefox only paints a drawing onto a canvas if it has a size
+  drawing.setAttribute("height", height);
   const picture = new Image();
   picture.alt = "";
-  picture.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(seal.querySelector("svg")));
-  return picture;
+  picture.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(drawing));
+  sealPicture = picture;
+  try {
+    await picture.decode();
+    const sharpness = Math.min(window.devicePixelRatio || 1, SHARPEST);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(width * sharpness);
+    canvas.height = Math.round(height * sharpness);
+    canvas.getContext("2d").drawImage(picture, 0, 0, canvas.width, canvas.height);
+    sealPicture = canvas;
+  } catch { /* the plain picture will do */ }
+}
+
+function copyOfSealPicture() {
+  if (!(sealPicture instanceof HTMLCanvasElement)) return sealPicture.cloneNode();
+  const copy = document.createElement("canvas");
+  copy.width = sealPicture.width;
+  copy.height = sealPicture.height;
+  copy.getContext("2d").drawImage(sealPicture, 0, 0);
+  return copy;
 }
 
 // ---- The burst ----------------------------------------------------------------------------
@@ -85,7 +114,7 @@ const BURST = {
     [324, 136], [338, 93], [351, 159]],                          // [direction in degrees, distance]
 };
 
-function burstTheSeal(sealPicture) {
+function burstTheSeal() {
   if (motionIsReduced) return;
   const layerBox = scrollLayer.getBoundingClientRect();
   const sealBox = seal.getBoundingClientRect();
@@ -141,7 +170,7 @@ function burstTheSeal(sealPicture) {
     const piece = document.createElement("div");
     piece.className = "wax-shard";
     piece.style.clipPath = `polygon(48% 49%, ${48 + Math.cos(from) * 110}% ${49 + Math.sin(from) * 110}%, ${48 + Math.cos(to) * 110}% ${49 + Math.sin(to) * 110}%)`;
-    piece.appendChild(sealPicture.cloneNode());
+    piece.appendChild(copyOfSealPicture());
     burst.appendChild(piece);
 
     const dx = Math.cos(direction) * BURST.distances[i];
@@ -177,11 +206,11 @@ function burstTheSeal(sealPicture) {
 export async function openScrollAndShowLetter() {
   if (scroll.classList.contains("is-open")) return;
   prepareLetter(readingArea);              // normally done long ago (see the bottom of this file)
-  const sealPicture = takePictureOfSeal();
+  if (!sealPicture) takePictureOfSeal();   // normally done long ago too
 
   scroll.classList.add("is-breaking");     // 1. the seal glows
   await wait(GLOW_TIME);
-  burstTheSeal(sealPicture);               // 2. and bursts
+  burstTheSeal();                          // 2. and bursts
   scroll.classList.add("is-shattered");
   await wait(BURST_HEAD_START);
   scroll.classList.add("is-open");         // 3. the ribbons go and the sheet unrolls (see the CSS)
@@ -192,6 +221,7 @@ export async function openScrollAndShowLetter() {
 }
 
 bendSealAroundTheRoll();
+takePictureOfSeal();
 
 // Build the letter at its final size while the scroll is still rolled up (it's invisible), straight
 // away: its videos load while the intro plays (letter.js waits for them). Then, when the writing

@@ -27,6 +27,7 @@
   height: var(--open-height);
   transform: rotate(0deg);
 }
+.scroll.is-open .paper { clip-path: inset(0); }
 
 /* The scroll's shadow on the page, and a faint purple glow around it. It's a separate, empty element
    BEHIND the scroll, not a filter on the scroll itself: a filter would make the browser redraw and
@@ -41,10 +42,19 @@
 }
 
 /* The sheet: black-purple, lighter in the middle, darker at the rolled edges. */
+/* The sheet always has its OPEN size; while rolled up, all but a strip under the roll is cut away
+   (clip-path), and unrolling just uncovers more of it, in step with the scroll growing.
+   It is never resized: a sheet that changes size has its grain and shadows redrawn, and the letter's
+   videos blended again, on every frame of the unrolling; one that is only uncovered is drawn once. */
 .paper {
   position: absolute;
-  inset: 0 6px;
+  top: 0;
+  left: 6px;
+  right: 6px;
+  height: var(--open-height);
   overflow: hidden;
+  clip-path: inset(0 0 calc(var(--open-height) - var(--roll-height)) 0);
+  transition: clip-path var(--unroll-time) var(--unroll-curve);
   background: linear-gradient(90deg, #030206 0%, #0e0816 2%, #140c1e 6%, #181024 20%, #1c122b 48%, #180f25 75%, #0f0819 96%, #030206 100%);
   box-shadow: inset 0 24px 25px -16px rgba(0, 0, 0, 0.8), inset 0 -24px 25px -16px rgba(0, 0, 0, 0.8), inset 0 0 60px rgba(123, 44, 191, 0.18);
 }
@@ -164,7 +174,7 @@
 /* The burst, made by scroll_and_wax_seal.js. */
 .seal-burst { position: absolute; z-index: 10; pointer-events: none; transform: rotate(-3deg); }
 .wax-shard { position: absolute; inset: 0; filter: blur(.7px); will-change: transform, opacity; }
-.wax-shard img, .wax-shard svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.wax-shard img, .wax-shard canvas, .wax-shard svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .explosion-flash { position: fixed; inset: 0; z-index: 100; pointer-events: none; background: #efdbff; opacity: 0; }
 .ember { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #ffe6a7; box-shadow: 0 0 5px #fff0b5, 0 0 13px #d9a0ff; pointer-events: none; }
 .burst-aura {
@@ -191,6 +201,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .scroll { --unroll-time: 0.01s; }
-  .scroll, .roll, .ribbon, .letter, .scroll.is-open .letter { transition-duration: 0.01s; transition-delay: 0s; }
+  .scroll, .paper, .roll, .ribbon, .letter, .scroll.is-open .letter { transition-duration: 0.01s; transition-delay: 0s; }
   .scroll.is-breaking .wax-seal { animation-duration: 0.01s; }
 }

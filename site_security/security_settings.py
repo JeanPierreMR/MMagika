@@ -134,7 +134,9 @@ SECURE_CSP = {
     "script-src": [CSP.SELF, CSP.NONCE],
     "style-src": [CSP.SELF, CSP.NONCE],
     "img-src": [CSP.SELF, "data:"],         # "data:" = tiny images written inside the page itself
-    "media-src": [CSP.SELF],                # videos, only from this site (the pre-rendered letter)
+    # Videos and sounds, only from this site. "blob:" = a copy the page has already downloaded from this
+    # site and keeps in memory, so the letter's videos play without stopping to load (letter_video_player.js).
+    "media-src": [CSP.SELF, "blob:"],
     "font-src": [CSP.SELF],                 # the fonts, stored on this site (chapters/shared/fonts)
     "connect-src": [CSP.SELF],
     "base-uri": [CSP.NONE],
