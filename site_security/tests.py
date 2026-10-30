@@ -8,10 +8,11 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import Client, SimpleTestCase, override_settings
 
 from site_security.limit_vault_guesses import forget_all_guesses
-from site_security.security_settings import read_secret_key, read_vault_combination
+from site_security.security_settings import read_secret_key, read_vault_combinations
 
 CHAPTER_PAGES = ["/vault", "/signal", "/terminal", "/letter"]
-RIGHT_COMBINATION = {"combination": "12MD20261120"}   # the default on your computer (security_settings.py)
+RIGHT_COMBINATION = {"combination": "12MD20261120"}   # the defaults on your computer (security_settings.py)
+FIRST_COMBINATION = {"combination": "12MD20262020"}
 
 
 def open_the_vault(client):
@@ -47,8 +48,14 @@ class TheStory(StartsFresh):
         self.assertEqual(open_the_vault(self.client).json(), {"opened": True, "next": "/signal"})
         self.assertEqual(self.client.get("/signal").status_code, 200)
 
+    def test_the_first_combination_opens_it_too(self):
+        answer = self.client.post("/vault/open", FIRST_COMBINATION, content_type="application/json")
+        self.assertEqual(answer.json(), {"opened": True, "next": "/signal"})
+
     def test_the_combination_never_appears_in_the_page(self):
-        self.assertNotContains(self.client.get("/vault"), "12MD20261120")
+        page = self.client.get("/vault")
+        self.assertNotContains(page, "12MD20261120")
+        self.assertNotContains(page, "12MD20262020")
 
     def test_each_chapter_leads_to_the_next(self):
         open_the_vault(self.client)
@@ -173,8 +180,9 @@ class GuardingTheVault(StartsFresh):
 
     def test_production_refuses_to_start_without_a_combination(self):
         with self.assertRaises(ImproperlyConfigured):
-            read_vault_combination({"RENDER": "true"})
-        self.assertEqual(read_vault_combination({"RENDER": "true", "VAULT_COMBINATION": "abc123"}), "ABC123")
+            read_vault_combinations({"RENDER": "true"})
+        self.assertEqual(read_vault_combinations({"RENDER": "true", "VAULT_COMBINATION": "abc123"}), ["ABC123"])
+        self.assertEqual(read_vault_combinations({"RENDER": "true", "VAULT_COMBINATION": " abc123 , xyz789 ,"}), ["ABC123", "XYZ789"])
 
 
 class LimitingRequests(SimpleTestCase):

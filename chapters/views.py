@@ -53,7 +53,9 @@ def try_vault_combination(request):
     except (ValueError, AttributeError):
         guess = ""
     # compare_digest takes the same time however many characters are right, so timing gives nothing away.
-    if hmac.compare_digest(guess.encode(), settings.VAULT_COMBINATION.encode()):
+    # Every combination is compared (no stopping at the first match), for the same reason.
+    matches = [hmac.compare_digest(guess.encode(), right.encode()) for right in settings.VAULT_COMBINATIONS]
+    if any(matches):
         progress.mark_finished(request, "vault")
         return JsonResponse({"opened": True, "next": "/signal"})
     return JsonResponse({"opened": False})

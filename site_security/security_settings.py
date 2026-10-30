@@ -90,23 +90,26 @@ CSRF_COOKIE_SAMESITE = "Lax"
 
 
 # --- The vault's combination -----------------------------------------------------------------
-def read_vault_combination(environment):
-    """Return the combination that opens the vault.
+def read_vault_combinations(environment):
+    """Return the combinations that open the vault (any one of them does).
 
-    It is only ever checked on the server (chapters/views.py), so it never appears in the page.
-    In production it must come from the VAULT_COMBINATION environment variable (set it in
-    Render's dashboard); on your computer a default is used.
+    They are only ever checked on the server (chapters/views.py), so they never appear in the page.
+    In production they must come from the VAULT_COMBINATION environment variable (set it in
+    Render's dashboard), separated by commas: e.g. "12MD20261120,12MD20262020".
+    On your computer these two are used:
+      12MD20261120   district 12, MD, and the new film's release date (2026-11-20)
+      12MD20262020   the first version
     """
-    combination = environment.get("VAULT_COMBINATION", "").strip().upper()
-    if combination:
-        return combination
+    combinations = [c.strip().upper() for c in environment.get("VAULT_COMBINATION", "").split(",") if c.strip()]
+    if combinations:
+        return combinations
     in_production = environment.get("RENDER") == "true" or environment.get("DJANGO_PRODUCTION") == "1"
     if in_production:
         raise ImproperlyConfigured("VAULT_COMBINATION must be set in production.")
-    return "12MD20261120"
+    return ["12MD20261120", "12MD20262020"]
 
 
-VAULT_COMBINATION = read_vault_combination(os.environ)
+VAULT_COMBINATIONS = read_vault_combinations(os.environ)
 # Wrong guesses allowed per visitor per minute, before "the lock is jammed".
 VAULT_GUESSES_ALLOWED_PER_VISITOR_PER_MINUTE = int(os.environ.get("VAULT_GUESSES_PER_MINUTE", "10"))
 

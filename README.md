@@ -69,7 +69,7 @@ DJANGO_DEBUG=1 python manage.py runserver     # open http://127.0.0.1:8000
 python manage.py test                         # the automatic checks
 ```
 
-The combination on your computer is `12MD20261120`.
+On your computer the vault opens with either `12MD20261120` or `12MD20262020`.
 
 While you're working on one chapter, add `?skip` to its address (e.g. `/letter?skip`) to jump straight to it. Add `?profile` to measure what makes a page slow. Both work only in debug mode.
 
@@ -88,13 +88,13 @@ docker compose -f compose.dev.yaml up        # Ctrl+C to stop
 
 ```bash
 docker build -t dreamers .
-docker run --rm -p 10000:10000 -e DJANGO_SECRET_KEY=anything -e VAULT_COMBINATION=12MD20261120 dreamers   # open http://localhost:10000
+docker run --rm -p 10000:10000 -e DJANGO_SECRET_KEY=anything -e VAULT_COMBINATION=12MD20261120,12MD20262020 dreamers   # open http://localhost:10000
 ```
 
 ## Put it on Render
 
 1. Push this repository to GitHub.
-2. In Render: **New → Blueprint** and pick the repository. Render reads `render.yaml` and builds the `Dockerfile`. It creates a secret key, and **asks you for `VAULT_COMBINATION`** (the vault's combination; it's only ever checked on the server). You get an address like `dreamers.onrender.com`.
+2. In Render: **New → Blueprint** and pick the repository. Render reads `render.yaml` and builds the `Dockerfile`. It creates a secret key, and **asks you for `VAULT_COMBINATION`** (the vault's combination; it's only ever checked on the server). Several are allowed, separated by commas: `12MD20261120,12MD20262020`. You get an address like `dreamers.onrender.com`.
 3. Using your own domain? Set `DJANGO_ALLOWED_HOSTS=yourdomain.com` in Render's environment settings.
 
 **After the first deploy, check one thing.** The request limits read the visitor's address from the first entry in the `X-Forwarded-For` header. Open the page from two different networks (for example Wi-Fi and phone data). If the second one gets "Too many requests" while the first is busy, adjust `find_visitor_ip_address` in `site_security/limit_requests_per_visitor.py`.
