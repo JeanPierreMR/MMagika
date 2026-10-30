@@ -11,7 +11,7 @@ from site_security.limit_vault_guesses import forget_all_guesses
 from site_security.security_settings import read_secret_key, read_vault_combination
 
 CHAPTER_PAGES = ["/vault", "/signal", "/terminal", "/letter"]
-RIGHT_COMBINATION = {"combination": "12MD20262020"}   # the default on your computer (security_settings.py)
+RIGHT_COMBINATION = {"combination": "12MD20261120"}   # the default on your computer (security_settings.py)
 
 
 def open_the_vault(client):
@@ -48,7 +48,7 @@ class TheStory(StartsFresh):
         self.assertEqual(self.client.get("/signal").status_code, 200)
 
     def test_the_combination_never_appears_in_the_page(self):
-        self.assertNotContains(self.client.get("/vault"), "12MD20262020")
+        self.assertNotContains(self.client.get("/vault"), "12MD20261120")
 
     def test_each_chapter_leads_to_the_next(self):
         open_the_vault(self.client)

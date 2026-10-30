@@ -69,7 +69,7 @@ DJANGO_DEBUG=1 python manage.py runserver     # open http://127.0.0.1:8000
 python manage.py test                         # the automatic checks
 ```
 
-The combination on your computer is `12MD20262020`.
+The combination on your computer is `12MD20261120`.
 
 While you're working on one chapter, add `?skip` to its address (e.g. `/letter?skip`) to jump straight to it. Add `?profile` to measure what makes a page slow. Both work only in debug mode.
 
@@ -88,7 +88,7 @@ docker compose -f compose.dev.yaml up        # Ctrl+C to stop
 
 ```bash
 docker build -t dreamers .
-docker run --rm -p 10000:10000 -e DJANGO_SECRET_KEY=anything -e VAULT_COMBINATION=12MD20262020 dreamers   # open http://localhost:10000
+docker run --rm -p 10000:10000 -e DJANGO_SECRET_KEY=anything -e VAULT_COMBINATION=12MD20261120 dreamers   # open http://localhost:10000
 ```
 
 ## Put it on Render

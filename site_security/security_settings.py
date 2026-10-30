@@ -103,7 +103,7 @@ def read_vault_combination(environment):
     in_production = environment.get("RENDER") == "true" or environment.get("DJANGO_PRODUCTION") == "1"
     if in_production:
         raise ImproperlyConfigured("VAULT_COMBINATION must be set in production.")
-    return "12MD20262020"
+    return "12MD20261120"
 
 
 VAULT_COMBINATION = read_vault_combination(os.environ)
